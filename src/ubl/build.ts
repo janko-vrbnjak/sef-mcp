@@ -12,9 +12,12 @@ import type { Address, TaxRule } from "../profile.js";
 import { formatAmount, lineAmount, parseDecimal, taxAmount, AMOUNT_SCALE } from "../money.js";
 import { xmlEscape as e } from "../safety.js";
 
-/** SRB-CIUS customization identifier. Verify against the current SEF technical guide. */
-export const SRB_CUSTOMIZATION_ID =
-  "urn:cen.eu:en16931:2017#compliant#urn:mfin.gov.rs:srbdt:2022#conformant#urn:mfin.gov.rs:srbdtext:2022";
+/**
+ * SRB-CIUS customization identifier (BT-24), ITU 01.10.2026 §1.3.
+ * The "#conformant#...srbdtext:2022" variant is only for invoices that use the
+ * Serbian extension elements; this builder does not, so it uses the base value.
+ */
+export const SRB_CUSTOMIZATION_ID = "urn:cen.eu:en16931:2017#compliant#urn:mfin.gov.rs:srbdt:2022";
 
 /** Electronic address scheme for Serbian PIB. */
 export const PIB_SCHEME_ID = "9948";
@@ -54,7 +57,8 @@ export interface UblInvoiceInput {
   vatPointDateCode: "3" | "35" | "432";
   periodStart?: string;
   periodEnd?: string;
-  deliveryDate?: string;
+  /** Datum prometa — mandatory since SEF 3.14 (error InvoiceDeliveryDateMissing). */
+  deliveryDate: string;
   orderNumber?: string;
   contractNumber?: string;
   notes?: string[];
@@ -215,12 +219,18 @@ export function buildInvoiceXml(input: UblInvoiceInput): { xml: string; totals: 
   parts.push(`<cbc:InvoiceTypeCode>${input.typeCode ?? "380"}</cbc:InvoiceTypeCode>`);
   for (const n of input.notes ?? []) parts.push(`<cbc:Note>${e(n)}</cbc:Note>`);
   parts.push(`<cbc:DocumentCurrencyCode>${cur}</cbc:DocumentCurrencyCode>`);
-  parts.push(
-    `<cac:InvoicePeriod>` +
-      (input.periodStart ? `<cbc:StartDate>${input.periodStart}</cbc:StartDate>` : "") +
-      (input.periodEnd ? `<cbc:EndDate>${input.periodEnd}</cbc:EndDate>` : "") +
-      `<cbc:DescriptionCode>${input.vatPointDateCode}</cbc:DescriptionCode></cac:InvoicePeriod>`
-  );
+  // SEF 3.14: DescriptionCode (BT-8) is required when lines use standard-rated VAT (S10/S20)
+  // and rejected otherwise (InvoicePeriodDescriptionCodeNotNeeded).
+  const needsVatPointCode = input.lines.some((l) => l.tax.category === "S");
+  if (input.periodStart || input.periodEnd || needsVatPointCode) {
+    parts.push(
+      `<cac:InvoicePeriod>` +
+        (input.periodStart ? `<cbc:StartDate>${input.periodStart}</cbc:StartDate>` : "") +
+        (input.periodEnd ? `<cbc:EndDate>${input.periodEnd}</cbc:EndDate>` : "") +
+        (needsVatPointCode ? `<cbc:DescriptionCode>${input.vatPointDateCode}</cbc:DescriptionCode>` : "") +
+        `</cac:InvoicePeriod>`
+    );
+  }
   if (input.orderNumber) parts.push(`<cac:OrderReference><cbc:ID>${e(input.orderNumber)}</cbc:ID></cac:OrderReference>`);
   if (input.contractNumber)
     parts.push(`<cac:ContractDocumentReference><cbc:ID>${e(input.contractNumber)}</cbc:ID></cac:ContractDocumentReference>`);
@@ -233,8 +243,8 @@ export function buildInvoiceXml(input: UblInvoiceInput): { xml: string; totals: 
   }
   parts.push(`<cac:AccountingSupplierParty>${partyXml(input.seller, "seller")}</cac:AccountingSupplierParty>`);
   parts.push(`<cac:AccountingCustomerParty>${partyXml(input.buyer, "buyer")}</cac:AccountingCustomerParty>`);
-  if (input.deliveryDate)
-    parts.push(`<cac:Delivery><cbc:ActualDeliveryDate>${input.deliveryDate}</cbc:ActualDeliveryDate></cac:Delivery>`);
+  if (!input.deliveryDate) throw new Error("deliveryDate (datum prometa) is required since SEF 3.14");
+  parts.push(`<cac:Delivery><cbc:ActualDeliveryDate>${input.deliveryDate}</cbc:ActualDeliveryDate></cac:Delivery>`);
   parts.push(
     `<cac:PaymentMeans><cbc:PaymentMeansCode>${e(input.paymentMeansCode)}</cbc:PaymentMeansCode>` +
       (input.paymentReference ? `<cbc:PaymentID>${e(input.paymentReference)}</cbc:PaymentID>` : "") +

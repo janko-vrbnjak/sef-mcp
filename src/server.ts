@@ -132,7 +132,7 @@ export async function startServer(tools: SefTools): Promise<void> {
       title: "List sales invoice ids",
       description: "Lists SEF sales invoice ids by status within a date range.",
       inputSchema: {
-        status: z.string().describe("SEF status, e.g. Sent, Approved, Rejected, Cancelled, Storno"),
+        status: z.string().describe("SEF status, e.g. Sent, Accepted, Rejected, Cancelled, Storno"),
         dateFrom: z.string().describe("ISO date-time"),
         dateTo: z.string().describe("ISO date-time"),
       },
@@ -144,13 +144,33 @@ export async function startServer(tools: SefTools): Promise<void> {
   server.registerTool(
     "sef_cancel_invoice",
     {
-      title: "Cancel a sent invoice",
+      title: "Cancel an invoice not yet delivered",
       description:
-        "Cancels a sales invoice on SEF (only possible before the buyer acts on it). Only call after explicit user approval.",
+        "Cancels a sales invoice on SEF. SEF allows this only for status Draft, New or Sending error; " +
+        "for Sent/Accepted/Rejected use sef_storno_invoice. Only call after explicit user approval.",
       inputSchema: { invoiceId: z.number().int().positive(), comment: z.string().min(3).max(1000) },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
     },
     wrap((a: { invoiceId: number; comment: string }) => tools.cancelInvoice(a.invoiceId, a.comment))
+  );
+
+  server.registerTool(
+    "sef_storno_invoice",
+    {
+      title: "Storno a sent invoice",
+      description:
+        "Reverses (storno) a sales invoice on SEF. SEF allows this only for status Sent, Accepted or Rejected. " +
+        "Only call after explicit user approval.",
+      inputSchema: {
+        invoiceId: z.number().int().positive(),
+        comment: z.string().min(3).max(1000),
+        stornoNumber: z.string().max(100).optional(),
+      },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
+    },
+    wrap((a: { invoiceId: number; comment: string; stornoNumber?: string }) =>
+      tools.stornoInvoice(a.invoiceId, a.comment, a.stornoNumber)
+    )
   );
 
   const transport = new StdioServerTransport();

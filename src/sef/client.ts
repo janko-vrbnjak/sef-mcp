@@ -8,7 +8,9 @@
  *   response for a repeated requestId, so retries are safe.
  *
  * Endpoint reference: "Спецификација апликативног интерфејса за непосредан
- * приступ", Ministry of Finance, version 7.11.2025.
+ * приступ", Ministry of Finance, edition 31.07.2026 (API dokumentacija_31_07_2026.pdf).
+ * The demo base URL is not stated in that document; it is the publicly used
+ * SEF demo host and must be confirmed against the official swagger.
  */
 import { redact } from "../safety.js";
 import type { SefEnvironment } from "../env.js";
@@ -28,7 +30,8 @@ export const ENDPOINTS = {
   unitMeasures: "/api/publicApi/get-unit-measures",
 } as const;
 
-export type SendToCir = "Yes" | "No" | "Auto";
+/** Documented values (API spec 31.07.2026): Yes / No. */
+export type SendToCir = "Yes" | "No";
 
 export class SefApiError extends Error {
   constructor(
@@ -117,6 +120,7 @@ export class SefClient {
     return this.request("GET", ENDPOINTS.getSalesInvoice, { invoiceId: String(invoiceId) });
   }
 
+  /** Allowed by SEF only for invoices in status Draft, New or Sending error. */
   cancel(invoiceId: number, cancelComments: string) {
     return this.request("POST", ENDPOINTS.cancel, {}, {
       contentType: "application/json",
@@ -124,8 +128,17 @@ export class SefClient {
     });
   }
 
+  /** Allowed by SEF only for invoices in status Sent, Accepted or Rejected. */
+  storno(invoiceId: number, stornoComment: string, stornoNumber?: string) {
+    return this.request("POST", ENDPOINTS.storno, {}, {
+      contentType: "application/json",
+      data: JSON.stringify({ invoiceId, stornoComment, ...(stornoNumber ? { stornoNumber } : {}) }),
+    });
+  }
+
   salesInvoiceIds(status: string, dateFrom: string, dateTo: string) {
-    return this.request("POST", ENDPOINTS.salesInvoiceIds, { status, dateFrom, dateTo });
+    // Parameter is spelled "Status" in the API spec 31.07.2026.
+    return this.request("POST", ENDPOINTS.salesInvoiceIds, { Status: status, dateFrom, dateTo });
   }
 
   vatExemptionReasons() {

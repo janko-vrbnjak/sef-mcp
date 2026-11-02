@@ -6,6 +6,7 @@ You are working on **sef-mcp**, a local-first MCP server for the Serbian e-invoi
 1. `docs/functional-spec.md` — what and why (business rules BR-1…BR-10, open questions Q1–Q5)
 2. `docs/technical-spec.md` — architecture, contracts, SEF API and UBL mapping, threat model
 3. `docs/adr/` — decisions you must not silently reverse
+4. Normative SEF sources are listed in technical-spec §0. If you rely on a SEF rule, cite the document and section; never invent one.
 
 ## Commands
 - `npm install`

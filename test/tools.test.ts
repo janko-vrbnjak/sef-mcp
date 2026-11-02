@@ -24,7 +24,8 @@ function setup(env: Record<string, string> = {}) {
   const cfg = loadRuntimeConfig({ SEF_MCP_DATA_DIR: dataDir, SEF_API_KEY: "test-key-123456", ...env });
   const calls: Array<{ url: string; init: RequestInit }> = [];
   const client = new SefClient({ env: cfg.env, apiKey: cfg.apiKey!, fetchImpl: fakeFetch(calls) });
-  return { tools: new SefTools(cfg, profile, client), calls, dataDir };
+  const fixedNow = () => new Date("2026-11-02T10:00:00Z");
+  return { tools: new SefTools(cfg, profile, client, fixedNow), calls, dataDir };
 }
 
 const args = {
@@ -44,6 +45,26 @@ test("draft uses profile defaults and sends nothing", () => {
   const xml = readFileSync(d.xmlFile, "utf8");
   assert.match(xml, /<cbc:DueDate>2026-11-10<\/cbc:DueDate>/); // customer default 8 days
   assert.match(xml, /<cbc:ID>UG-01\/2026<\/cbc:ID>/);
+  assert.match(xml, /<cbc:ActualDeliveryDate>2026-11-02<\/cbc:ActualDeliveryDate>/);
+  assert.ok(d.warnings.some((w) => w.includes("datum prometa")));
+});
+
+test("deliveryDate defaults to periodEnd and future dates are flagged", () => {
+  const { tools } = setup();
+  const d1 = tools.draftInvoice({ ...args, periodStart: "2026-10-01", periodEnd: "2026-10-31" });
+  assert.match(readFileSync(d1.xmlFile, "utf8"), /<cbc:ActualDeliveryDate>2026-10-31</);
+  const d2 = tools.draftInvoice({ ...args, number: "PR-2026-002", deliveryDate: "2026-12-01" });
+  assert.ok(d2.warnings.some((w) => w.includes("future")));
+});
+
+test("storno goes to the storno endpoint and respects the prod gate", async () => {
+  const { tools, calls } = setup();
+  await tools.stornoInvoice(42, "Pogrešan iznos", "ST-1");
+  assert.ok(calls[0]!.url.endsWith("/api/publicApi/sales-invoice/storno"));
+  assert.deepEqual(JSON.parse(String(calls[0]!.init.body)), { invoiceId: 42, stornoComment: "Pogrešan iznos", stornoNumber: "ST-1" });
+  const prod = setup({ SEF_ENV: "prod" });
+  await assert.rejects(prod.tools.stornoInvoice(42, "x x x"), /SEF_MCP_ALLOW_PROD_WRITE/);
+  assert.equal(prod.calls.length, 0);
 });
 
 test("send requires the matching approvalCode", async () => {
@@ -73,7 +94,7 @@ test("duplicate invoice number produces a warning after a successful send", asyn
   const d = tools.draftInvoice(args);
   await tools.sendInvoice(d.draftId, d.approvalCode);
   const again = tools.draftInvoice(args);
-  assert.equal(again.warnings.length, 1);
+  assert.ok(again.warnings.some((w) => w.includes("already sent")));
 });
 
 test("number pattern from profile is enforced", () => {

@@ -26,7 +26,8 @@ MCP server koji AI asistentu omogućava da **pripremi i pošalje izlaznu e-faktu
 | `sef_get_draft` | Čita nacrt (opciono sa XML-om) | ne |
 | `sef_send_invoice` | Šalje **odobren** nacrt na SEF | **da** |
 | `sef_get_invoice` / `sef_list_invoice_ids` | Status i pregled poslatih faktura | ne |
-| `sef_cancel_invoice` | Otkazuje fakturu pre nego što kupac postupi | **da** |
+| `sef_cancel_invoice` | Otkazuje fakturu u statusu Nacrt / Nova / Greška pri slanju | **da** |
+| `sef_storno_invoice` | Stornira fakturu u statusu Poslata / Prihvaćena / Odbijena | **da** |
 
 ## Brzi početak
 
@@ -51,7 +52,7 @@ Detalji: [SECURITY.md](SECURITY.md) i [docs/technical-spec.md](docs/technical-sp
 
 ## Status
 
-**v0.1 — rana faza.** UBL generator prati SRB-CIUS strukturu, ali pre produkcije mora proći poređenje sa fakturom koju je SEF već prihvatio i test na demo okruženju (`executeValidation=true`). Vidi [docs/roadmap.md](docs/roadmap.md).
+**v0.1 — rana faza.** Usklađeno sa SEF API specifikacijom od 31.07.2026 (SEF 3.14) i ITU od 01.10.2026. UBL generator prati SRB-CIUS strukturu, ali pre produkcije mora proći poređenje sa fakturom koju je SEF već prihvatio i test na demo okruženju (`executeValidation=true`). Vidi [docs/roadmap.md](docs/roadmap.md).
 
 ## Dokumentacija
 

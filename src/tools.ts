@@ -22,12 +22,14 @@ export const DraftInvoiceInput = {
   dueDate: dateStr.optional().describe("Due date; defaults to issueDate + paymentDueDays"),
   periodStart: dateStr.optional(),
   periodEnd: dateStr.optional(),
-  deliveryDate: dateStr.optional(),
+  deliveryDate: dateStr
+    .optional()
+    .describe("Datum prometa (mandatory on SEF since 3.14). Defaults to periodEnd, else issueDate — confirm with the user."),
   contractNumber: z.string().optional(),
   orderNumber: z.string().optional(),
   paymentReference: z.string().optional().describe("Poziv na broj"),
   notes: z.array(z.string().max(1000)).max(10).optional(),
-  sendToCir: z.enum(["Yes", "No", "Auto"]).optional(),
+  sendToCir: z.enum(["Yes", "No"]).optional(),
   lines: z
     .array(
       z.object({
@@ -64,10 +66,16 @@ export class SefTools {
   constructor(
     readonly cfg: RuntimeConfig,
     readonly profile: Profile,
-    clientOverride?: SefClient
+    clientOverride?: SefClient,
+    private readonly now: () => Date = () => new Date()
   ) {
     this.store = new Store(cfg.dataDir);
     this.client = clientOverride;
+  }
+
+  /** Today's date in Serbia (SEF works in Europe/Belgrade), YYYY-MM-DD. */
+  private today(): string {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Belgrade" }).format(this.now());
   }
 
   private sef(): SefClient {
@@ -147,6 +155,17 @@ export class SefTools {
       throw new Error("Seller is not VAT registered but a line uses category S.");
     }
 
+    const deliveryDate = args.deliveryDate ?? args.periodEnd ?? args.issueDate;
+    if (!args.deliveryDate) {
+      warnings.push(
+        `deliveryDate (datum prometa) not given — using ${deliveryDate} (${args.periodEnd ? "periodEnd" : "issueDate"}). Confirm with the user.`
+      );
+    }
+    const today = this.today();
+    if (deliveryDate > today) {
+      warnings.push(`deliveryDate ${deliveryDate} is in the future; SEF 3.14 rejects future VAT obligation dates.`);
+    }
+
     const dueDays = customer.defaults.paymentDueDays ?? p.invoiceDefaults.paymentDueDays;
     const { xml, totals } = buildInvoiceXml({
       number: args.number,
@@ -156,7 +175,7 @@ export class SefTools {
       vatPointDateCode: p.invoiceDefaults.vatPointDateCode,
       periodStart: args.periodStart,
       periodEnd: args.periodEnd,
-      deliveryDate: args.deliveryDate,
+      deliveryDate,
       orderNumber: args.orderNumber,
       contractNumber: args.contractNumber ?? customer.defaults.contractNumber,
       notes: args.notes,
@@ -234,6 +253,18 @@ export class SefTools {
       return { cancelled: true, environment: this.cfg.env, invoiceId, sef: result };
     } catch (err) {
       this.store.audit({ action: "cancel", ok: false, env: this.cfg.env, invoiceId, error: (err as Error).message });
+      throw err;
+    }
+  }
+
+  async stornoInvoice(invoiceId: number, comment: string, stornoNumber?: string) {
+    assertWriteAllowed(this.cfg, "storno_invoice");
+    try {
+      const result = await this.sef().storno(invoiceId, comment, stornoNumber);
+      this.store.audit({ action: "storno", ok: true, env: this.cfg.env, invoiceId, stornoNumber, result });
+      return { stornoed: true, environment: this.cfg.env, invoiceId, sef: result };
+    } catch (err) {
+      this.store.audit({ action: "storno", ok: false, env: this.cfg.env, invoiceId, error: (err as Error).message });
       throw err;
     }
   }

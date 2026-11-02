@@ -1,6 +1,16 @@
 # Technical specification — sef-mcp
 
-Document version 0.1 · 2026-11-02
+Document version 0.2 · 2026-11-02
+
+## 0. Normative sources
+
+| Source | Edition | Used for |
+|---|---|---|
+| SEF API spec — *Спецификација апликативног интерфејса за непосредан приступ* (`API dokumentacija_31_07_2026.pdf`) | 31.07.2026 (latest referenced SEF version 3.14) | Endpoints, parameters, status rules |
+| SEF internal technical guide — ITU (`СЕФ 01 okt 2026.pdf`) | 01.10.2026 | UBL / SRB-CIUS business terms (BT-x) |
+| Official swagger — `https://efaktura.mfin.gov.rs/swagger/index.html` | live | Exact parameter names and enums (to be snapshotted in `docs/reference/`) |
+
+When sources disagree, the order is: swagger > API spec > ITU > anything else. Record the disagreement in functional-spec §6.
 
 ## 1. Architecture
 
@@ -67,42 +77,45 @@ Schema changes bump `version` and ship a migration note in CHANGELOG.
 | `sef_send_invoice` | draftId, approvalCode(8) | SEF ids | **destructive**, idempotent |
 | `sef_get_invoice` | invoiceId | SEF invoice | readOnly, openWorld |
 | `sef_list_invoice_ids` | status, dateFrom, dateTo | ids | readOnly, openWorld |
-| `sef_cancel_invoice` | invoiceId, comment | SEF response | **destructive** |
+| `sef_cancel_invoice` | invoiceId, comment | SEF response | **destructive** (Draft/New/Sending error only) |
+| `sef_storno_invoice` | invoiceId, comment, stornoNumber? | SEF response | **destructive** (Sent/Accepted/Rejected only) |
 
 Errors are returned as `isError: true` with a redacted message; the server never crashes on a tool error.
 
 ## 5. SEF API mapping
 
-Source: *Спецификација апликативног интерфејса за непосредан приступ*, Ministry of Finance, 7.11.2025.
+Source: API spec 31.07.2026 (see §0).
 
 | Use | Method + path | Notes |
 |---|---|---|
 | Send | `POST /api/publicApi/sales-invoice/ubl?requestId&sendToCir&executeValidation` | body: UBL XML |
 | Get | `GET /api/publicApi/sales-invoice?invoiceId` | includes Status |
-| Cancel | `POST /api/publicApi/sales-invoice/cancel` | JSON `{invoiceId, cancelComments}` |
-| Storno | `POST /api/publicApi/sales-invoice/storno` | roadmap |
-| IDs | `POST /api/publicApi/sales-invoice/ids?status&dateFrom&dateTo` | |
+| Cancel | `POST /api/publicApi/sales-invoice/cancel` | JSON `{invoiceId, cancelComments}`; only status Draft, New, Sending error |
+| Storno | `POST /api/publicApi/sales-invoice/storno` | JSON `{invoiceId, stornoNumber?, stornoComment}`; only status Sent, Accepted, Rejected |
+| IDs | `POST /api/publicApi/sales-invoice/ids?Status&dateFrom&dateTo` | |
+| Changes | `POST /api/publicApi/sales-invoice/changes?date` | past dates only; kept 1 month (roadmap) |
 | Exemptions | `GET /api/publicApi/sales-invoice/getValueAddedTaxExemptionReasonList` | used by `ping` |
 | Units | `GET /api/publicApi/get-unit-measures` | |
 
-Auth header: `ApiKey`. Redirects are refused. Base URLs are constants; there is intentionally no override variable.
+Auth header: `ApiKey`. `sendToCir`: `Yes` / `No` (only documented values). Redirects are refused. The API spec names only the production host; the demo host `demoefaktura.mfin.gov.rs` is the publicly used one and must be confirmed (Q6). Base URLs are constants; there is intentionally no override variable.
 
-**Idempotency:** `requestId` = UUID-shaped string derived from the SHA-256 of the draft XML. SEF returns the original response for a repeated `requestId`, so a retry after a timeout cannot create a second invoice. Consequence: if SEF rejected a draft, you must create a new draft (changed XML → new requestId).
+**Idempotency:** `requestId` = UUID-shaped string derived from the SHA-256 of the draft XML. The spec does not define a `requestId` format (examples are numeric); a UUID-shaped string is used. SEF returns the original response for a repeated `requestId`, so a retry after a timeout cannot create a second invoice. Consequence: if SEF rejected a draft, you must create a new draft (changed XML → new requestId).
 
 ## 6. UBL mapping (SRB-CIUS)
 
 | Invoice field | UBL element | Source |
 |---|---|---|
-| Customization | `cbc:CustomizationID` | constant `SRB_CUSTOMIZATION_ID` (**verify, Q1**) |
+| Customization (BT-24) | `cbc:CustomizationID` = `urn:cen.eu:en16931:2017#compliant#urn:mfin.gov.rs:srbdt:2022` | ITU §1.3; the `#conformant#…srbdtext:2022` form only when extension elements are used (not by this builder) |
 | Number | `cbc:ID` | tool arg |
 | Issue / due date | `cbc:IssueDate`, `cbc:DueDate` | arg / defaults |
 | Type | `cbc:InvoiceTypeCode` = 380 | constant |
-| VAT point date | `cac:InvoicePeriod/cbc:DescriptionCode` | profile |
-| Period | `cac:InvoicePeriod/cbc:StartDate|EndDate` | arg |
+| VAT point date (BT-8) | `cac:InvoicePeriod/cbc:DescriptionCode` (3/35/432) | profile; **emitted only when a line is category `S`** — SEF 3.14 rejects it otherwise (`InvoicePeriodDescriptionCodeNotNeeded`) |
+| Delivery date | `cac:Delivery/cbc:ActualDeliveryDate` | **mandatory since SEF 3.14** (`InvoiceDeliveryDateMissing`); arg → periodEnd → issueDate (with warning); future date → warning |
+| Period | `cac:InvoicePeriod/cbc:StartDate|EndDate` | arg; `InvoicePeriod` omitted entirely when empty |
 | Contract | `cac:ContractDocumentReference/cbc:ID` | arg / customer default |
 | Attachment | `cac:AdditionalDocumentReference/.../cbc:EmbeddedDocumentBinaryObject` | PDF, base64 |
-| Seller / buyer | `cbc:EndpointID@schemeID=9948` (PIB), `PartyName`, `PostalAddress`, `PartyTaxScheme` (`RS{PIB}`, **Q2**), `PartyLegalEntity` (name, MB) | profile |
-| Public buyer | `cac:PartyIdentification/cbc:ID` = `JBKJS:{n}` | profile |
+| Seller / buyer | `cbc:EndpointID@schemeID=9948` (PIB), `PartyName`, `PostalAddress`, `PartyTaxScheme` (`RS{PIB}` / `VAT`; non-VAT seller representation open — **Q2**), `PartyLegalEntity` (name, MB) | profile |
+| Public buyer | `cac:PartyIdentification/cbc:ID` = `JBKJS:{5 digits}`, no schemeID (ITU BT-46) | profile |
 | Payment | `PaymentMeansCode`, `PaymentID` (poziv na broj), `PayeeFinancialAccount/ID` (18 digits) | profile / arg |
 | Tax | `TaxTotal/TaxSubtotal` per (category, percent, reason) with `TaxExemptionReasonCode` | computed |
 | Totals | `LegalMonetaryTotal` | computed |

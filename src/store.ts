@@ -17,7 +17,7 @@ export interface Draft {
   customerId: string;
   buyerName: string;
   buyerPib: string;
-  sendToCir: "Yes" | "No" | "Auto";
+  sendToCir: "Yes" | "No";
   totals: UblTotals;
   sha256: string;
   approvalCode: string;

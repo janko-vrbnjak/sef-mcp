@@ -10,6 +10,7 @@ function base(over: Partial<UblInvoiceInput> = {}): UblInvoiceInput {
     number: "PR-2026-001",
     issueDate: "2026-11-02",
     dueDate: "2026-11-17",
+    deliveryDate: "2026-10-31",
     currency: "RSD",
     vatPointDateCode: "35",
     seller: { name: "Primer & Sinovi DOO", pib: "100000001", mb: "20000001", address: addr, vatRegistered: false },
@@ -27,7 +28,23 @@ test("non-VAT invoice: SS / 0% / PDV-RS-33, totals equal net", () => {
   assert.equal(totals.tax, "0.00");
   assert.match(xml, /<cbc:ID>SS<\/cbc:ID><cbc:Percent>0<\/cbc:Percent><cbc:TaxExemptionReasonCode>PDV-RS-33<\/cbc:TaxExemptionReasonCode>/);
   assert.match(xml, /<cbc:EndpointID schemeID="9948">100000002<\/cbc:EndpointID>/);
-  assert.match(xml, /<cbc:DescriptionCode>35<\/cbc:DescriptionCode>/);
+  assert.match(xml, /<cbc:ActualDeliveryDate>2026-10-31<\/cbc:ActualDeliveryDate>/);
+  // SEF 3.14: no VAT point code when no line is standard-rated (InvoicePeriodDescriptionCodeNotNeeded)
+  assert.ok(!xml.includes("<cbc:DescriptionCode>"));
+  assert.ok(!xml.includes("<cac:InvoicePeriod>"));
+  assert.ok(xml.includes("<cbc:CustomizationID>urn:cen.eu:en16931:2017#compliant#urn:mfin.gov.rs:srbdt:2022</cbc:CustomizationID>"));
+});
+
+test("standard-rated invoice carries the VAT point date code", () => {
+  const { xml } = buildInvoiceXml(
+    base({ lines: [{ name: "Roba", quantity: "1", unitCode: "H87", unitPrice: "100.00", tax: { category: "S", percent: "20" } }] })
+  );
+  assert.match(xml, /<cac:InvoicePeriod><cbc:DescriptionCode>35<\/cbc:DescriptionCode><\/cac:InvoicePeriod>/);
+});
+
+test("period dates without VAT point code for exempt invoices", () => {
+  const { xml } = buildInvoiceXml(base({ periodStart: "2026-10-01", periodEnd: "2026-10-31" }));
+  assert.match(xml, /<cac:InvoicePeriod><cbc:StartDate>2026-10-01<\/cbc:StartDate><cbc:EndDate>2026-10-31<\/cbc:EndDate><\/cac:InvoicePeriod>/);
 });
 
 test("XML special characters are escaped", () => {
@@ -46,7 +63,7 @@ test("deterministic output", () => {
 });
 
 test("element order: header → parties → payment → tax → totals → lines", () => {
-  const { xml } = buildInvoiceXml(base({ contractNumber: "UG-1" }));
+  const { xml } = buildInvoiceXml(base({ contractNumber: "UG-1", periodStart: "2026-10-01", periodEnd: "2026-10-31" }));
   const order = [
     "<cbc:CustomizationID>",
     "<cbc:IssueDate>",
@@ -57,6 +74,7 @@ test("element order: header → parties → payment → tax → totals → lines
     "<cac:ContractDocumentReference>",
     "<cac:AccountingSupplierParty>",
     "<cac:AccountingCustomerParty>",
+    "<cac:Delivery>",
     "<cac:PaymentMeans>",
     "<cac:TaxTotal>",
     "<cac:LegalMonetaryTotal>",

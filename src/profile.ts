@@ -54,7 +54,7 @@ export const CustomerSchema = z.object({
     .object({
       contractNumber: z.string().optional(),
       paymentDueDays: z.number().int().min(0).max(365).optional(),
-      sendToCir: z.enum(["Yes", "No", "Auto"]).optional(),
+      sendToCir: z.enum(["Yes", "No"]).optional(),
       tax: TaxRuleSchema.optional(),
     })
     .default({}),
