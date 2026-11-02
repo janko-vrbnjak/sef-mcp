@@ -141,9 +141,11 @@ export async function startServer(tools: SefTools): Promise<void> {
     "sef_list_invoice_ids",
     {
       title: "List sales invoice ids",
-      description: "Lists SEF sales invoice ids by status within a date range.",
+      description:
+        "Lists SEF sales invoice ids by status within a date range. For New, Draft and Mistake the range filters " +
+        "by creation date; for all other statuses by sending date (SEF 3.15.0).",
       inputSchema: {
-        status: z.string().describe("SEF status, e.g. Sent, Accepted, Rejected, Cancelled, Storno"),
+        status: z.string().describe("SEF status, e.g. New, Draft, Mistake, Sent, Approved, Rejected, Cancelled, Storno"),
         dateFrom: z.string().describe("ISO date-time"),
         dateTo: z.string().describe("ISO date-time"),
       },

@@ -6,7 +6,8 @@ Document version 0.2 · 2026-11-02
 
 | Source | Edition | Used for |
 |---|---|---|
-| SEF API spec — *Спецификација апликативног интерфејса за непосредан приступ* (`API dokumentacija_31_07_2026.pdf`) | 31.07.2026 (latest referenced SEF version 3.14) | Endpoints, parameters, status rules |
+| SEF release notes 3.15.0 → 4.2.0 — https://www.efaktura.gov.rs/tekst/en/5624/sef-updates-and-versions.php | 4.2.0 (demo 01.10.2026, prod 02.10.2026) | Validation rules introduced after the API spec; see §11 |
+| SEF API spec — *Спецификација апликативног интерфејса за непосредан приступ* (`API dokumentacija_31_07_2026.pdf`) | 31.07.2026 | Endpoints, parameters, status rules |
 | SEF internal technical guide — ITU (`СЕФ 01 okt 2026.pdf`) | 01.10.2026 | UBL / SRB-CIUS business terms (BT-x) |
 | Official swagger — `https://efaktura.mfin.gov.rs/swagger/index.html` | live | Exact parameter names and enums (to be snapshotted in `docs/reference/`) |
 
@@ -158,6 +159,30 @@ Out of scope: a compromised local machine or MCP client.
 - New document types (381/383) → new builder function + tool; keep `buildInvoiceXml` pure.
 - Remote transport → new entry using the same `SefTools`; must add OAuth and per-user key storage before exposure.
 - Currency conversion → a `RateProvider` interface; amounts stay RSD in UBL.
+
+## 11. SEF version compliance (baseline 4.2.0)
+
+Rules from SEF release notes that affect outgoing invoices, and where sef-mcp enforces them before upload. Rules live in `src/ubl/rules.ts`; tests in `test/rules.test.ts` are named after the release.
+
+| SEF | Rule | SEF error code | sef-mcp |
+|---|---|---|---|
+| 3.14 | Delivery date mandatory | `InvoiceDeliveryDateMissing` | always emitted; default + warning |
+| 3.14 | `InvoicePeriod/DescriptionCode` only for S lines | `InvoicePeriodDescriptionCodeNotDefined` / `…NotNeeded` | emitted only when a line is `S`. **Open (Q9):** demo returned `RS-R-005` (BT-8 required except on reduction documents) for an `SS` invoice on 02.11.2026; production accepted the same structure in October 2026 |
+| 3.15.0 | Tax category must be supported | `VATCategoryNotAllowed` | `TAX_CATEGORIES` check (profile + line) |
+| 3.15.0 | JBKJS must match a registered company | `CompanyWithJBKJSNotFound` | format check only (5 digits) |
+| 3.15.0 | `sales-invoice/ids`: New/Draft/Mistake filter by creation date, others by sending date | — | tool description |
+| 3.16.0 | Rate > 0 only for category `S` | `UBLTaxCategoryPercentNotAllowed` | `taxRuleProblem` |
+| 3.16.0 | Every `TaxSubtotal` category must exist on a line | `UBLNoItemsWithTaxSubtotalTaxCategory` | by construction (subtotals derived from lines) + test |
+| 3.17.1 | Exemption code PDV-RS-36b-6 withdrawn → PDV-RS-10-2-4a | — | `WITHDRAWN_EXEMPTION_CODES` |
+| 4.0.0 | Quantity and price positive; negatives only with `N` | — | > 0 enforced; `N` refused until reduction documents are supported |
+| 4.0.0 | Line without unit of measure blocks sending | — | unit code required on every line |
+| 4.0.0 | API key settings moved to the **SEF Administrator** module | — | docs/setup.md |
+| 4.0.0 | New `sales-invoice/status-history/pdf` | — | roadmap |
+| 4.2.0 | Rejecting an invoice on SEF auto-rejects the CRF obligation if it is *Active*; re-accepting asks CRF to reactivate it | — | no code change; affects `sendToCir=Yes` buyers (functional-spec UC-3) |
+
+Releases 3.15.1, 3.16.1–3.16.4, 3.17.2 and 4.1.1 are performance fixes only; 4.1.0 changes only VAT recording (`vat-recording/group`), which sef-mcp does not use.
+
+When SEF publishes a new release: read its notes, add rows here, add a test named after the release, update `docs/reference/`.
 
 ## 10. Conventions
 

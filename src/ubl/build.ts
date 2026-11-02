@@ -11,6 +11,7 @@
 import type { Address, TaxRule } from "../profile.js";
 import { formatAmount, lineAmount, parseDecimal, taxAmount, AMOUNT_SCALE } from "../money.js";
 import { xmlEscape as e } from "../safety.js";
+import { taxRuleProblem, UNIT_CODE_RE } from "./rules.js";
 
 /**
  * SRB-CIUS customization identifier (BT-24), ITU 01.10.2026 §1.3.
@@ -189,10 +190,17 @@ export function buildInvoiceXml(input: UblInvoiceInput): { xml: string; totals: 
   assertDate("deliveryDate", input.deliveryDate);
   if (!input.number.trim()) throw new Error("Invoice number is required");
   for (const l of input.lines) {
-    if (l.tax.category !== "S" && !["Z", "O"].includes(l.tax.category) && !l.tax.exemptionReasonCode) {
-      throw new Error(`Line "${l.name}": tax category ${l.tax.category} requires an exemptionReasonCode`);
+    const taxProblem = taxRuleProblem(l.tax);
+    if (taxProblem) throw new Error(`Line "${l.name}": ${taxProblem}`);
+    // SEF 4.0.0: quantity and price must be positive (negatives only with category N, not supported here).
+    if (parseDecimal(l.quantity, 4, "quantity") === 0n) throw new Error(`Line "${l.name}": quantity must be > 0 (SEF 4.0.0)`);
+    if (parseDecimal(l.unitPrice, AMOUNT_SCALE, "unitPrice") === 0n) {
+      throw new Error(`Line "${l.name}": unit price must be > 0 (SEF 4.0.0)`);
     }
-    if (parseDecimal(l.quantity, 4, "quantity") === 0n) throw new Error(`Line "${l.name}": quantity must be > 0`);
+    // SEF 4.0.0: an item without a unit of measure blocks sending.
+    if (!UNIT_CODE_RE.test(l.unitCode ?? "")) {
+      throw new Error(`Line "${l.name}": unit of measure is required (UN/ECE Rec 20 code, e.g. H87, HUR, MON) — SEF 4.0.0`);
+    }
   }
 
   const totals = computeTotals(input.lines);

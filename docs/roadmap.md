@@ -9,4 +9,4 @@
 | **1.0** | Javno izdanje | npm paket sa provenance, potpisani release, stabilan profil v1, security review |
 | kasnije | Udaljeni konektor | HTTP transport + OAuth + skladište ključeva po korisniku, tek uz poseban bezbednosni dizajn |
 | kasnije | Ulazne fakture | Pregled, prihvatanje/odbijanje (`purchase-invoice`, `purchase-invoice/xml`, `purchase-invoice/changes`) |
-| kasnije | Arhiva | Preuzimanje XML-a i potpisa poslatih faktura (`sales-invoice/xml`, `sales-invoice/signature`) u lokalnu arhivu; praćenje promena (`sales-invoice/changes`) |
+| kasnije | Arhiva | Preuzimanje XML-a, potpisa i PDF-a istorije statusa poslatih faktura (`sales-invoice/xml`, `sales-invoice/signature`, `sales-invoice/status-history/pdf` — SEF 4.0.0) u lokalnu arhivu; praćenje promena (`sales-invoice/changes`) |

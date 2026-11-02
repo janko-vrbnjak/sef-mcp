@@ -2,7 +2,7 @@
 
 Verzija dokumenta: 0.2 · Datum: 2026-11-02 · Status: nacrt
 
-Izvori: SEF API specifikacija 31.07.2026, SEF ITU 01.10.2026, zvanični swagger (vidi technical-spec §0).
+Izvori: SEF 4.2.0 (beleške izdanja 3.15.0–4.2.0), SEF API specifikacija 31.07.2026, SEF ITU 01.10.2026, zvanični swagger (vidi technical-spec §0 i §11).
 
 ## 1. Svrha
 
@@ -57,6 +57,8 @@ Preduzetnik ili mala firma u Srbiji izdaje mali broj izlaznih faktura mesečno, 
 
 Klijent pre poziva traži dozvolu. Pravila statusa su iz API specifikacije 31.07.2026.
 
+Javni sektor (SEF 4.2.0): kada kupac odbije fakturu na SEF-u, povezana obaveza u CRF-u automatski prelazi u „Odbijena” ako je bila „Aktivna” (ako je „Započeta” ili „Izmirena”, ostaje nepromenjena). Ako kupac kasnije prihvati fakturu, SEF traži od CRF-a ponovnu aktivaciju.
+
 ### UC-4 Onboarding nove firme
 1. `sef-mcp init` pravi profil iz primera.
 2. Korisnik popunjava podatke; validacija javlja tačno polje i razlog greške.
@@ -78,6 +80,8 @@ Klijent pre poziva traži dozvolu. Pravila statusa su iz API specifikacije 31.07
 | BR-9 | Broj fakture mora odgovarati `numberPattern` ako je definisan. |
 | BR-10 | Prilozi: samo PDF, samo iz dozvoljenog foldera. Podrazumevano najviše 2 priloga po ≤ 1 MB (ograničenja SEF-a); oba podesiva (`SEF_MCP_MAX_ATTACHMENTS`, `SEF_MCP_MAX_ATTACHMENT_BYTES`). |
 | BR-13 | Napomene na fakturi: prvo opšte iz profila (npr. pravni osnov oslobađanja od PDV-a), zatim podrazumevane za kupca, pa one iz zahteva. |
+| BR-15 | Kategorija PDV-a mora biti podržana na SEF-u; stopa > 0 samo za `S`, za ostale 0; povučene šifre izuzeća se odbijaju (SEF 3.15.0, 3.16.0, 3.17.1). |
+| BR-16 | Količina i cena moraju biti veće od 0; svaka stavka ima jedinicu mere (SEF 4.0.0). |
 | BR-14 | Jedinica mere: stavka → podrazumevana za kupca → podrazumevana iz profila. Česte: `MON` (mesec), `HUR` (sat), `H87` (komad); spisak preko `sef_list_unit_measures`. |
 | BR-11 | Datum prometa je obavezan (SEF 3.14). Ako nije zadat: kraj perioda, pa datum izdavanja — uz upozorenje koje korisnik mora da potvrdi. Datum u budućnosti → upozorenje. |
 | BR-12 | Šifra datuma nastanka poreske obaveze (3/35/432) šalje se samo kada neka stavka ima kategoriju `S`; inače je SEF odbija. |
@@ -94,3 +98,4 @@ Klijent pre poziva traži dozvolu. Pravila statusa su iz API specifikacije 31.07
 | Q6 | ~~Demo base URL~~ | **Zatvoreno:** `https://demoefaktura.mfin.gov.rs` (swagger: `/swagger/index.html`). |
 | Q7 | ~~Format računa u `PayeeFinancialAccount`~~ | **Zatvoreno:** 18 cifara bez crtica (golden fixture). |
 | Q8 | Da li kupac van PDV-a sme da ima `PartyTaxScheme` — sada se izostavlja kada je `vatRegistered: false` | Demo test sa takvim kupcem |
+| Q9 | BT-8 (`InvoicePeriod/DescriptionCode`) kod faktura bez stavki `S` (npr. `SS` / `PDV-RS-33`). Produkcija je u oktobru 2026 prihvatila takvu fakturu **bez** BT-8 (golden fixture), a SEF 3.14 tada vraća `InvoicePeriodDescriptionCodeNotNeeded`. Demo je 02.11.2026 odbio istu strukturu: `RS-R-005 — Faktura treba da sadrži šifru datuma poreske obaveze (BT-8), osim za Dokument o smanjenju`. Beleške izdanja 3.15.0–4.2.0 ovu promenu ne pominju. Ponašanje se ne menja (BR-12) dok se ne razjasni. | 1) Demo test: ista faktura sa `DescriptionCode` 35. 2) Pitanje podršci SEF-a: da li je RS-R-005 na demo okruženju najava za produkciju i koja vrednost važi za neobveznika PDV-a. Menja se tek uz novu prihvaćenu fakturu (AGENTS.md). |

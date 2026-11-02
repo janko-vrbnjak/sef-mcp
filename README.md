@@ -53,7 +53,7 @@ Detalji: [SECURITY.md](SECURITY.md) i [docs/technical-spec.md](docs/technical-sp
 
 ## Status
 
-**v0.1 — rana faza.** Usklađeno sa SEF API specifikacijom od 31.07.2026 (SEF 3.14) i ITU od 01.10.2026. UBL generator reprodukuje strukturu fakture koju je SEF prihvatio u produkciji (golden test). Pre produkcije još: test na demo okruženju (`executeValidation=true`). Vidi [docs/roadmap.md](docs/roadmap.md).
+**v0.1 — rana faza.** Usklađeno sa **SEF 4.2.0** (pravila iz izdanja 3.14–4.2.0, vidi tehničku specifikaciju §11), API specifikacijom od 31.07.2026 i ITU od 01.10.2026. UBL generator reprodukuje strukturu fakture koju je SEF prihvatio u produkciji (golden test). Pre produkcije još: test na demo okruženju (`executeValidation=true`). Vidi [docs/roadmap.md](docs/roadmap.md).
 
 ## Dokumentacija
 

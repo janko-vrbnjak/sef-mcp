@@ -5,7 +5,7 @@ Cilj: za ~20 minuta imati sef-mcp povezan sa Claude-om, sa API ključem iz secre
 ## 0. Preduslovi
 
 - Node.js ≥ 20.11 (`node -v`)
-- Nalog na SEF-u i pristup podešavanjima API-ja (posebno za demo i za produkciju)
+- Nalog na SEF-u i API ključ (posebno za demo i za produkciju). Od SEF 4.0.0 API ključ se podešava u modulu **SEF Administrator**.
 - Secret manager. Primeri ispod koriste **1Password CLI** (`op`); bilo koji alat koji ubacuje promenljive okruženja radi isto.
 
 ## 1. Instalacija

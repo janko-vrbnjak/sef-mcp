@@ -4,6 +4,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/), versions: [SemVer](http
 
 ## [Unreleased]
 ### Added
+- SEF 4.2.0 baseline: pre-upload checks for rules from releases 3.15.0–4.0.0 (`src/ubl/rules.ts`, `test/rules.test.ts`): supported tax categories (`VATCategoryNotAllowed`), rate only for `S` (`UBLTaxCategoryPercentNotAllowed`), withdrawn exemption code PDV-RS-36b-6, positive quantity and price, mandatory unit of measure. Same tax checks run on the profile.
+- Compliance matrix in technical-spec §11.
 - Golden test against an anonymised invoice SEF accepted in production (`test/fixtures/accepted-non-vat-services.xml`).
 - `sef_list_unit_measures` tool.
 - Profile: `invoiceDefaults.notes`, `customers[].vatRegistered` (default true), `customers[].defaults.{notes, unitCode, orderNumber}`; unit codes validated.

@@ -7,11 +7,12 @@
  */
 import { readFileSync } from "node:fs";
 import { z } from "zod";
+import { taxRuleProblem, UNIT_CODE_RE } from "./ubl/rules.js";
 
 const pib = z.string().regex(/^\d{9}$/, "PIB must be exactly 9 digits");
 const mb = z.string().regex(/^\d{8}$/, "Matični broj must be exactly 8 digits");
 const isoCountry = z.string().regex(/^[A-Z]{2}$/).default("RS");
-const unitCode = z.string().regex(/^[A-Z0-9]{2,3}$/, "UN/ECE Rec 20 code, e.g. H87, HUR, MON (list: sef_list_unit_measures)");
+const unitCode = z.string().regex(UNIT_CODE_RE, "UN/ECE Rec 20 code, e.g. H87, HUR, MON (list: sef_list_unit_measures)");
 const notes = z.array(z.string().min(1).max(1000)).max(10);
 const decimal = z.string().regex(/^\d+(\.\d+)?$/, "use a decimal string, e.g. \"20\" or \"0\"");
 
@@ -110,6 +111,12 @@ export function parseProfile(raw: unknown): Profile {
   for (const c of profile.customers) {
     if (ids.has(c.id)) throw new Error(`Invalid profile: duplicate customer id "${c.id}"`);
     ids.add(c.id);
+  }
+  const taxRules: Array<[string, TaxRule]> = [["seller.defaultTax", profile.seller.defaultTax]];
+  for (const c of profile.customers) if (c.defaults.tax) taxRules.push([`customers.${c.id}.defaults.tax`, c.defaults.tax]);
+  for (const [where, rule] of taxRules) {
+    const problem = taxRuleProblem(rule);
+    if (problem) throw new Error(`Invalid profile: ${where}: ${problem}`);
   }
   if (!profile.seller.vatRegistered && profile.seller.defaultTax.category === "S") {
     throw new Error(
