@@ -1,0 +1,46 @@
+{
+  "name": "sef-mcp",
+  "version": "0.1.0",
+  "description": "Local-first MCP server for issuing e-invoices on the Serbian SEF (Sistem elektronskih faktura) — safe by default, configurable per company.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "sef-mcp": "dist/src/index.js"
+  },
+  "files": [
+    "dist/src",
+    "examples",
+    "README.md",
+    "SECURITY.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node --test \"dist/test/**/*.test.js\"",
+    "start": "node dist/src/index.js serve",
+    "doctor": "node dist/src/index.js doctor",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\""
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "sef",
+    "efaktura",
+    "e-invoice",
+    "ubl",
+    "serbia",
+    "srbija"
+  ]
+}

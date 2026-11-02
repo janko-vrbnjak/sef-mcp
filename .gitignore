@@ -1,0 +1,25 @@
+
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+
+# secrets & local config — never commit
+.env
+.env.*
+!.env.example
+profile.json
+*.profile.json
+.sef-mcp/
+data/
+drafts/
+audit.jsonl
+
+# real invoices / SEF responses
+*.xml
+!test/fixtures/**/*.xml
+*.pdf
+!test/fixtures/**/*.pdf
+
+.specstory/**

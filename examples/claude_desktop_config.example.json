@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "sef-demo": {
+      "command": "/opt/homebrew/bin/op",
+      "args": [
+        "run", "--env-file", "/Users/YOU/.config/sef-mcp/.env.demo", "--",
+        "/usr/local/bin/node", "/Users/YOU/Projects/sef-mcp/dist/src/index.js", "serve"
+      ]
+    }
+  }
+}

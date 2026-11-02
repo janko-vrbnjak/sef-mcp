@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "seller": {
+    "name": "Primer Usluge DOO Beograd",
+    "pib": "100000001",
+    "mb": "20000001",
+    "address": {
+      "street": "Primer ulica 1",
+      "city": "Beograd",
+      "postalCode": "11000",
+      "country": "RS"
+    },
+    "email": "fakture@primer.rs",
+    "bankAccount": "160-0000000000001-11",
+    "vatRegistered": false,
+    "defaultTax": {
+      "category": "SS",
+      "percent": "0",
+      "exemptionReasonCode": "PDV-RS-33",
+      "exemptionReasonText": "Obveznik nije u sistemu PDV-a"
+    }
+  },
+  "invoiceDefaults": {
+    "currency": "RSD",
+    "paymentDueDays": 15,
+    "vatPointDateCode": "35",
+    "paymentMeansCode": "30",
+    "unitCode": "H87",
+    "numberPattern": "^PR-\\d{4}-\\d{3}$"
+  },
+  "customers": [
+    {
+      "id": "kupac-a",
+      "name": "Kupac A DOO",
+      "pib": "100000002",
+      "mb": "20000002",
+      "address": {
+        "street": "Kupčeva 10",
+        "city": "Novi Sad",
+        "postalCode": "21000",
+        "country": "RS"
+      },
+      "defaults": {
+        "contractNumber": "UG-01/2026",
+        "paymentDueDays": 8
+      }
+    }
+  ]
+}
