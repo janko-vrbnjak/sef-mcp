@@ -19,6 +19,7 @@ export interface RuntimeConfig {
   readOnly: boolean;
   allowProdWrite: boolean;
   maxAttachmentBytes: number;
+  maxAttachments: number;
   requestTimeoutMs: number;
 }
 
@@ -43,7 +44,10 @@ export function loadRuntimeConfig(env: NodeJS.ProcessEnv = process.env): Runtime
     );
   }
   const timeout = Number(env.SEF_MCP_TIMEOUT_MS ?? 30000);
-  const maxAtt = Number(env.SEF_MCP_MAX_ATTACHMENT_BYTES ?? 5 * 1024 * 1024);
+  // SEF limits (confirmed by the maintainer, 2026-11): 2 attachments, 1 MB each. Configurable downwards or,
+  // if SEF raises them, upwards.
+  const maxAtt = Number(env.SEF_MCP_MAX_ATTACHMENT_BYTES ?? 1024 * 1024);
+  const maxCount = Number(env.SEF_MCP_MAX_ATTACHMENTS ?? 2);
   return {
     env: rawEnv,
     apiKey,
@@ -52,7 +56,8 @@ export function loadRuntimeConfig(env: NodeJS.ProcessEnv = process.env): Runtime
     attachmentsDir: env.SEF_MCP_ATTACHMENTS_DIR ? resolve(env.SEF_MCP_ATTACHMENTS_DIR) : undefined,
     readOnly: bool(env.SEF_MCP_READ_ONLY),
     allowProdWrite: bool(env.SEF_MCP_ALLOW_PROD_WRITE),
-    maxAttachmentBytes: Number.isFinite(maxAtt) && maxAtt > 0 ? maxAtt : 5 * 1024 * 1024,
+    maxAttachmentBytes: Number.isFinite(maxAtt) && maxAtt > 0 ? maxAtt : 1024 * 1024,
+    maxAttachments: Number.isInteger(maxCount) && maxCount >= 0 ? maxCount : 2,
     requestTimeoutMs: Number.isFinite(timeout) && timeout > 0 ? timeout : 30000,
   };
 }

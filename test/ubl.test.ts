@@ -47,6 +47,16 @@ test("period dates without VAT point code for exempt invoices", () => {
   assert.match(xml, /<cac:InvoicePeriod><cbc:StartDate>2026-10-01<\/cbc:StartDate><cbc:EndDate>2026-10-31<\/cbc:EndDate><\/cac:InvoicePeriod>/);
 });
 
+test("buyer outside VAT gets no PartyTaxScheme; missing postal code is omitted", () => {
+  const { xml } = buildInvoiceXml(
+    base({ buyer: { name: "Kupac B", pib: "100000003", address: { street: "Ulica 2", city: "Niš", country: "RS" }, vatRegistered: false } })
+  );
+  assert.ok(!xml.includes("RS100000003"));
+  const buyer = xml.slice(xml.indexOf("<cac:AccountingCustomerParty>"), xml.indexOf("</cac:AccountingCustomerParty>"));
+  assert.ok(!buyer.includes("<cbc:PostalZone>"));
+  assert.match(xml, /<cbc:CompanyID>RS100000001<\/cbc:CompanyID>/); // seller outside VAT still carries RS{PIB} (as accepted by SEF)
+});
+
 test("XML special characters are escaped", () => {
   const { xml } = buildInvoiceXml(base());
   assert.ok(xml.includes("Primer &amp; Sinovi DOO"));

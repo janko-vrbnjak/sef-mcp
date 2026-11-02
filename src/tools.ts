@@ -28,7 +28,7 @@ export const DraftInvoiceInput = {
   contractNumber: z.string().optional(),
   orderNumber: z.string().optional(),
   paymentReference: z.string().optional().describe("Poziv na broj"),
-  notes: z.array(z.string().max(1000)).max(10).optional(),
+  notes: z.array(z.string().max(1000)).max(10).optional().describe("Extra notes, added after profile and customer default notes"),
   sendToCir: z.enum(["Yes", "No"]).optional(),
   lines: z
     .array(
@@ -37,7 +37,11 @@ export const DraftInvoiceInput = {
         description: z.string().max(1000).optional(),
         quantity: decimalStr,
         unitPrice: decimalStr.describe("Unit price in RSD, without VAT"),
-        unitCode: z.string().optional().describe("UN/ECE Rec 20, e.g. H87 (piece), HUR (hour)"),
+        unitCode: z
+          .string()
+          .regex(/^[A-Z0-9]{2,3}$/)
+          .optional()
+          .describe("UN/ECE Rec 20, e.g. H87 (piece), HUR (hour), MON (month). Defaults: customer → profile."),
         tax: TaxRuleSchema.optional().describe("Override; defaults to customer or seller default"),
       })
     )
@@ -45,9 +49,9 @@ export const DraftInvoiceInput = {
     .max(200),
   attachments: z
     .array(z.string())
-    .max(5)
+    .max(10)
     .optional()
-    .describe("PDF file paths relative to SEF_MCP_ATTACHMENTS_DIR"),
+    .describe("PDF file paths relative to SEF_MCP_ATTACHMENTS_DIR (limit SEF_MCP_MAX_ATTACHMENTS, default 2)"),
 };
 
 const DraftInvoiceSchema = z.object(DraftInvoiceInput);
@@ -113,9 +117,17 @@ export class SefTools {
     return this.sef().vatExemptionReasons();
   }
 
+  unitMeasures() {
+    return this.sef().unitMeasures();
+  }
+
   private loadAttachments(paths: string[] | undefined): UblAttachment[] {
     if (!paths?.length) return [];
     if (!this.cfg.attachmentsDir) throw new Error("Attachments require SEF_MCP_ATTACHMENTS_DIR to be set.");
+    if (paths.length > this.cfg.maxAttachments) {
+      throw new Error(`Too many attachments: ${paths.length} (max ${this.cfg.maxAttachments}, SEF_MCP_MAX_ATTACHMENTS).`);
+    }
+    const usedIds = new Set<string>();
     return paths.map((p, i) => {
       const real = resolveInside(this.cfg.attachmentsDir!, p);
       if (!real.toLowerCase().endsWith(".pdf")) throw new Error(`Only PDF attachments are allowed: ${p}`);
@@ -123,7 +135,11 @@ export class SefTools {
       if (size > this.cfg.maxAttachmentBytes) throw new Error(`Attachment too large (${size} bytes): ${p}`);
       const buf = readFileSync(real);
       if (buf.subarray(0, 5).toString("latin1") !== "%PDF-") throw new Error(`Not a PDF file: ${p}`);
-      return { id: `ATT-${i + 1}`, filename: basename(real), mimeCode: "application/pdf" as const, base64: buf.toString("base64") };
+      // Document reference ID = file name without extension (as SEF shows it), made unique if repeated.
+      let id = basename(real).replace(/\.pdf$/i, "") || `Prilog ${i + 1}`;
+      if (usedIds.has(id)) id = `${id} (${i + 1})`;
+      usedIds.add(id);
+      return { id, filename: basename(real), mimeCode: "application/pdf" as const, base64: buf.toString("base64") };
     });
   }
 
@@ -148,7 +164,7 @@ export class SefTools {
       ...(l.description ? { description: l.description } : {}),
       quantity: l.quantity,
       unitPrice: l.unitPrice,
-      unitCode: l.unitCode ?? p.invoiceDefaults.unitCode,
+      unitCode: l.unitCode ?? customer.defaults.unitCode ?? p.invoiceDefaults.unitCode,
       tax: l.tax ?? defaultTax,
     }));
     if (!p.seller.vatRegistered && lines.some((l) => l.tax.category === "S")) {
@@ -176,9 +192,9 @@ export class SefTools {
       periodStart: args.periodStart,
       periodEnd: args.periodEnd,
       deliveryDate,
-      orderNumber: args.orderNumber,
+      orderNumber: args.orderNumber ?? customer.defaults.orderNumber,
       contractNumber: args.contractNumber ?? customer.defaults.contractNumber,
-      notes: args.notes,
+      notes: [...p.invoiceDefaults.notes, ...(customer.defaults.notes ?? []), ...(args.notes ?? [])],
       seller: { ...p.seller, vatRegistered: p.seller.vatRegistered },
       buyer: {
         name: customer.name,
@@ -187,6 +203,7 @@ export class SefTools {
         jbkjs: customer.jbkjs,
         address: customer.address,
         email: customer.email,
+        vatRegistered: customer.vatRegistered,
       },
       payeeAccount: p.seller.bankAccount,
       paymentMeansCode: p.invoiceDefaults.paymentMeansCode,

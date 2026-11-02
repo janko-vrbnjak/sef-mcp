@@ -11,12 +11,15 @@ import { z } from "zod";
 const pib = z.string().regex(/^\d{9}$/, "PIB must be exactly 9 digits");
 const mb = z.string().regex(/^\d{8}$/, "Matični broj must be exactly 8 digits");
 const isoCountry = z.string().regex(/^[A-Z]{2}$/).default("RS");
+const unitCode = z.string().regex(/^[A-Z0-9]{2,3}$/, "UN/ECE Rec 20 code, e.g. H87, HUR, MON (list: sef_list_unit_measures)");
+const notes = z.array(z.string().min(1).max(1000)).max(10);
 const decimal = z.string().regex(/^\d+(\.\d+)?$/, "use a decimal string, e.g. \"20\" or \"0\"");
 
 export const AddressSchema = z.object({
   street: z.string().min(1),
   city: z.string().min(1),
-  postalCode: z.string().min(1),
+  /** Optional: SEF accepts a buyer address without a postal code (seen on accepted invoices). */
+  postalCode: z.string().min(1).optional(),
   country: isoCountry,
 });
 
@@ -50,9 +53,15 @@ export const CustomerSchema = z.object({
   jbkjs: z.string().regex(/^\d{5}$/).optional(),
   address: AddressSchema,
   email: z.string().email().optional(),
+  /** Buyer in the VAT system → PartyTaxScheme RS{PIB}/VAT is emitted. Most B2B buyers are; set false otherwise. */
+  vatRegistered: z.boolean().default(true),
   defaults: z
     .object({
       contractNumber: z.string().optional(),
+      orderNumber: z.string().optional(),
+      /** Notes added to every invoice for this customer (after the profile-wide notes). */
+      notes: notes.optional(),
+      unitCode: unitCode.optional(),
       paymentDueDays: z.number().int().min(0).max(365).optional(),
       sendToCir: z.enum(["Yes", "No"]).optional(),
       tax: TaxRuleSchema.optional(),
@@ -72,7 +81,9 @@ export const ProfileSchema = z.object({
       /** UN/ECE 4461 payment means code; 30 = credit transfer */
       paymentMeansCode: z.string().default("30"),
       /** UN/ECE Rec 20 unit code; H87 = piece, HUR = hour */
-      unitCode: z.string().default("H87"),
+      unitCode: unitCode.default("H87"),
+      /** Notes added to every invoice, e.g. the legal basis for not charging VAT. */
+      notes: notes.default([]),
       /** Optional regex an invoice number must match, e.g. "^INV-\\d{4}-\\d{3}$" */
       numberPattern: z.string().optional(),
     })

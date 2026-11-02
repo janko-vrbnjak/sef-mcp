@@ -27,6 +27,10 @@ Popuni `seller` (naziv, PIB, MB, adresa, račun, PDV status) i `customers`. Prav
 
 - `seller.vatRegistered: false` → `defaultTax` **ne sme** biti `S`. Za obveznike van sistema PDV-a najčešće je `SS` + `PDV-RS-33` — **potvrdi sa knjigovođom**.
 - Šifre izuzeća možeš da izlistaš alatom `sef_list_vat_exemption_reasons` (radi i na demo okruženju).
+- `invoiceDefaults.notes` — napomene na svakoj fakturi (npr. „Izdavalac računa nije obveznik PDV-a u skladu sa članom 33. Zakona o PDV-u.”). Kupac može imati svoje (`defaults.notes`).
+- Jedinica mere: `MON` (mesec), `HUR` (sat), `H87` (komad)… Pun spisak: `sef_list_unit_measures`. Podrazumevanu možeš postaviti po kupcu (`defaults.unitCode`).
+- `customers[].vatRegistered` (podrazumevano `true`) — postavi `false` za kupca van sistema PDV-a.
+- Prilozi: SEF prima najviše 2 PDF-a po 1 MB; ograničenja menjaš sa `SEF_MCP_MAX_ATTACHMENTS` i `SEF_MCP_MAX_ATTACHMENT_BYTES`.
 - `numberPattern` je opcioni regex za broj fakture; sprečava slučajno pogrešnu numeraciju.
 - Profil sadrži samo javne poslovne podatke. **Nikad** ne stavljaj ključ u profil.
 

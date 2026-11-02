@@ -3,7 +3,7 @@
 You are working on **sef-mcp**, a local-first MCP server for the Serbian e-invoicing system (SEF). Mistakes here can issue legally binding invoices or leak credentials. Prefer safety over convenience.
 
 ## Read first
-1. `docs/functional-spec.md` — what and why (business rules BR-1…BR-10, open questions Q1–Q5)
+1. `docs/functional-spec.md` — what and why (business rules BR-x, open questions Q-x)
 2. `docs/technical-spec.md` — architecture, contracts, SEF API and UBL mapping, threat model
 3. `docs/adr/` — decisions you must not silently reverse
 4. Normative SEF sources are listed in technical-spec §0. If you rely on a SEF rule, cite the document and section; never invent one.
@@ -15,6 +15,7 @@ You are working on **sef-mcp**, a local-first MCP server for the Serbian e-invoi
 - `node dist/src/index.js doctor` — config check (needs `SEF_MCP_PROFILE`)
 
 ## Hard rules
+- `test/golden.test.ts` encodes what SEF actually accepted. If a change breaks it, the change is wrong unless a newer accepted invoice proves otherwise.
 - Never call the real SEF API from tests or scripts. Use the `fetchImpl` injection in `SefClient`.
 - Never add code that logs, prints, persists or returns `SEF_API_KEY` or request headers.
 - Never add an environment variable that changes the SEF base URL.

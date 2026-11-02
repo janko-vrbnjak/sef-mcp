@@ -24,6 +24,7 @@ Only the latest minor release receives fixes until 1.0.
 - Never enable "always allow" for `sef_send_invoice` or `sef_cancel_invoice` in your MCP client.
 - Keep the data directory private; it contains invoice data.
 - Rotate the SEF API key if you suspect exposure (SEF account settings).
+- API client exports (Insomnia/Insomnium, Postman, Bruno…) usually contain the key in plain text. Never commit or share them; use environment variables or secret references in those tools too.
 
 ## Contributor rules
 

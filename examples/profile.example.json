@@ -26,7 +26,10 @@
     "vatPointDateCode": "35",
     "paymentMeansCode": "30",
     "unitCode": "H87",
-    "numberPattern": "^PR-\\d{4}-\\d{3}$"
+    "numberPattern": "^PR-\\d{4}-\\d{3}$",
+    "notes": [
+      "Izdavalac računa nije obveznik PDV-a u skladu sa članom 33. Zakona o PDV-u."
+    ]
   },
   "customers": [
     {
@@ -42,8 +45,13 @@
       },
       "defaults": {
         "contractNumber": "UG-01/2026",
-        "paymentDueDays": 8
-      }
+        "paymentDueDays": 8,
+        "unitCode": "HUR",
+        "notes": [
+          "Po Ugovoru UG-01/2026."
+        ]
+      },
+      "vatRegistered": true
     }
   ]
 }

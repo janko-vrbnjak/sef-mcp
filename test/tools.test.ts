@@ -67,6 +67,33 @@ test("storno goes to the storno endpoint and respects the prod gate", async () =
   assert.equal(prod.calls.length, 0);
 });
 
+test("notes, unit code and buyer VAT status come from the profile", () => {
+  const { tools } = setup();
+  const d = tools.draftInvoice({ ...args, lines: [{ name: "X", quantity: "1", unitPrice: "1.00" }], notes: ["Hvala."] });
+  const xml = readFileSync(d.xmlFile, "utf8");
+  const notes = [...xml.matchAll(/<cbc:Note>([^<]*)<\/cbc:Note>/g)].map((m) => m[1]);
+  assert.deepEqual(notes, [
+    "Izdavalac računa nije obveznik PDV-a u skladu sa članom 33. Zakona o PDV-u.",
+    "Po Ugovoru UG-01/2026.",
+    "Hvala.",
+  ]);
+  assert.match(xml, /unitCode="HUR"/);
+  assert.match(xml, /<cbc:CompanyID>RS100000002<\/cbc:CompanyID>/);
+});
+
+test("attachment count and size limits are configurable", () => {
+  const att = mkdtempSync(join(tmpdir(), "sef-att-"));
+  for (const n of ["a.pdf", "b.pdf", "c.pdf"]) writeFileSync(join(att, n), "%PDF-1.4\n");
+  writeFileSync(join(att, "big.pdf"), "%PDF-1.4\n" + "x".repeat(2048));
+  const { tools } = setup({ SEF_MCP_ATTACHMENTS_DIR: att });
+  assert.throws(() => tools.draftInvoice({ ...args, attachments: ["a.pdf", "b.pdf", "c.pdf"] }), /max 2/);
+  const ok = tools.draftInvoice({ ...args, attachments: ["a.pdf", "b.pdf"] });
+  assert.match(readFileSync(ok.xmlFile, "utf8"), /<cbc:ID>a<\/cbc:ID>/);
+  const small = setup({ SEF_MCP_ATTACHMENTS_DIR: att, SEF_MCP_MAX_ATTACHMENT_BYTES: "1024", SEF_MCP_MAX_ATTACHMENTS: "3" });
+  assert.throws(() => small.tools.draftInvoice({ ...args, attachments: ["big.pdf"] }), /too large/);
+  assert.doesNotThrow(() => small.tools.draftInvoice({ ...args, attachments: ["a.pdf", "b.pdf", "c.pdf"] }));
+});
+
 test("send requires the matching approvalCode", async () => {
   const { tools, calls } = setup();
   const d = tools.draftInvoice(args);

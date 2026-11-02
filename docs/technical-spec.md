@@ -47,7 +47,8 @@ Secrets enter only through environment variables, injected by a secret manager (
 | `SEF_MCP_ATTACHMENTS_DIR` | — | Only directory attachments may come from |
 | `SEF_MCP_READ_ONLY` | `false` | Blocks send/cancel |
 | `SEF_MCP_ALLOW_PROD_WRITE` | `false` | Second switch required for prod writes |
-| `SEF_MCP_MAX_ATTACHMENT_BYTES` | `5242880` | Per-file limit |
+| `SEF_MCP_MAX_ATTACHMENTS` | `2` | Max attachments per invoice (SEF limit) |
+| `SEF_MCP_MAX_ATTACHMENT_BYTES` | `1048576` | Per-file limit (SEF limit 1 MB) |
 | `SEF_MCP_TIMEOUT_MS` | `30000` | HTTP timeout |
 
 Use a separate data dir per environment so the duplicate-number check is per environment.
@@ -72,6 +73,7 @@ Schema changes bump `version` and ship a migration note in CHANGELOG.
 | `sef_ping` | — | reachable, count of exemption reasons | readOnly, openWorld |
 | `sef_list_customers` | — | customers | readOnly |
 | `sef_list_vat_exemption_reasons` | — | SEF list | readOnly, openWorld |
+| `sef_list_unit_measures` | — | SEF list of unit codes | readOnly, openWorld |
 | `sef_draft_invoice` | see `DraftInvoiceInput` | draftId, approvalCode, totals, warnings, xmlFile | local write only |
 | `sef_get_draft` | draftId, includeXml? | draft (+xml) | readOnly |
 | `sef_send_invoice` | draftId, approvalCode(8) | SEF ids | **destructive**, idempotent |
@@ -114,7 +116,9 @@ Auth header: `ApiKey`. `sendToCir`: `Yes` / `No` (only documented values). Redir
 | Period | `cac:InvoicePeriod/cbc:StartDate|EndDate` | arg; `InvoicePeriod` omitted entirely when empty |
 | Contract | `cac:ContractDocumentReference/cbc:ID` | arg / customer default |
 | Attachment | `cac:AdditionalDocumentReference/.../cbc:EmbeddedDocumentBinaryObject` | PDF, base64 |
-| Seller / buyer | `cbc:EndpointID@schemeID=9948` (PIB), `PartyName`, `PostalAddress`, `PartyTaxScheme` (`RS{PIB}` / `VAT`; non-VAT seller representation open — **Q2**), `PartyLegalEntity` (name, MB) | profile |
+| Seller / buyer | `cbc:EndpointID@schemeID=9948` (PIB), `PartyName`, `PostalAddress`, `PartyTaxScheme` (`RS{PIB}` / `VAT` — always for the seller, also outside VAT, as SEF accepted; for the buyer only when `customer.vatRegistered`, default true), `PartyLegalEntity` (name, MB), `Contact/ElectronicMail` | profile; `PostalZone` optional |
+| Notes | `cbc:Note` × n | profile `invoiceDefaults.notes` → `customer.defaults.notes` → args |
+| Attachment ID | `AdditionalDocumentReference/cbc:ID` = file name without `.pdf` | args |
 | Public buyer | `cac:PartyIdentification/cbc:ID` = `JBKJS:{5 digits}`, no schemeID (ITU BT-46) | profile |
 | Payment | `PaymentMeansCode`, `PaymentID` (poziv na broj), `PayeeFinancialAccount/ID` (18 digits) | profile / arg |
 | Tax | `TaxTotal/TaxSubtotal` per (category, percent, reason) with `TaxExemptionReasonCode` | computed |
@@ -145,7 +149,9 @@ Out of scope: a compromised local machine or MCP client.
 - `node:test`, no test framework dependency. `npm test` builds then runs `dist/test/**/*.test.js`.
 - Unit: money, UBL structure/order/escaping, safety, profile validation, draft tamper detection.
 - Tool flow with a fake `fetch`: no network before approval, approvalCode check, prod gate, audit has no key.
-- **Next (v0.2):** golden fixtures — a real SEF-accepted XML (anonymised) per issuer type, compared semantically to builder output; opt-in demo e2e test (`SEF_E2E=1`).
+- **Golden fixtures** (`test/fixtures/`): anonymised XML of invoices SEF accepted in production. `test/golden.test.ts` compares the builder's element tree (order included) and key values against them. Current: non-VAT services invoice (SS / PDV-RS-33, MON + HUR lines, 2 PDF attachments). Fixture-only optional elements are listed explicitly in the test.
+- To add a fixture: download the XML from SEF, keep only `<Invoice>…</Invoice>` (drop the `env:DocumentEnvelope`), replace every identifying value and amount, replace attachment base64 with `JVBERi0xLjQK`, then add a matching test case.
+- **Next:** opt-in demo e2e test (`SEF_E2E=1`) against `demoefaktura.mfin.gov.rs`.
 
 ## 9. Extension points
 

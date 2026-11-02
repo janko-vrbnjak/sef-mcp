@@ -162,7 +162,7 @@ function partyXml(p: UblParty, role: "seller" | "buyer"): string {
     `<cac:PartyName><cbc:Name>${e(p.name)}</cbc:Name></cac:PartyName>` +
     `<cac:PostalAddress><cbc:StreetName>${e(p.address.street)}</cbc:StreetName><cbc:CityName>${e(
       p.address.city
-    )}</cbc:CityName><cbc:PostalZone>${e(p.address.postalCode)}</cbc:PostalZone><cac:Country><cbc:IdentificationCode>${e(
+    )}</cbc:CityName>${p.address.postalCode ? `<cbc:PostalZone>${e(p.address.postalCode)}</cbc:PostalZone>` : ""}<cac:Country><cbc:IdentificationCode>${e(
       p.address.country
     )}</cbc:IdentificationCode></cac:Country></cac:PostalAddress>` +
     taxScheme +

@@ -79,6 +79,17 @@ export async function startServer(tools: SefTools): Promise<void> {
   );
 
   server.registerTool(
+    "sef_list_unit_measures",
+    {
+      title: "List unit measures",
+      description: "Returns SEF's list of accepted unit codes (e.g. H87 piece, HUR hour, MON month).",
+      inputSchema: {},
+      annotations: readOnlyRemote,
+    },
+    wrap(() => tools.unitMeasures())
+  );
+
+  server.registerTool(
     "sef_draft_invoice",
     {
       title: "Draft an invoice (no sending)",

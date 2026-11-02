@@ -76,7 +76,9 @@ Klijent pre poziva traži dozvolu. Pravila statusa su iz API specifikacije 31.07
 | BR-7 | Rok plaćanja: eksplicitan → podrazumevani za kupca → podrazumevani iz profila. |
 | BR-8 | Kupac sa JBKJS se podrazumevano šalje na CRF (`sendToCir=Yes`). |
 | BR-9 | Broj fakture mora odgovarati `numberPattern` ako je definisan. |
-| BR-10 | Prilozi: samo PDF, samo iz dozvoljenog foldera, najviše 5, podrazumevano ≤ 5 MB po fajlu. |
+| BR-10 | Prilozi: samo PDF, samo iz dozvoljenog foldera. Podrazumevano najviše 2 priloga po ≤ 1 MB (ograničenja SEF-a); oba podesiva (`SEF_MCP_MAX_ATTACHMENTS`, `SEF_MCP_MAX_ATTACHMENT_BYTES`). |
+| BR-13 | Napomene na fakturi: prvo opšte iz profila (npr. pravni osnov oslobađanja od PDV-a), zatim podrazumevane za kupca, pa one iz zahteva. |
+| BR-14 | Jedinica mere: stavka → podrazumevana za kupca → podrazumevana iz profila. Česte: `MON` (mesec), `HUR` (sat), `H87` (komad); spisak preko `sef_list_unit_measures`. |
 | BR-11 | Datum prometa je obavezan (SEF 3.14). Ako nije zadat: kraj perioda, pa datum izdavanja — uz upozorenje koje korisnik mora da potvrdi. Datum u budućnosti → upozorenje. |
 | BR-12 | Šifra datuma nastanka poreske obaveze (3/35/432) šalje se samo kada neka stavka ima kategoriju `S`; inače je SEF odbija. |
 
@@ -85,9 +87,10 @@ Klijent pre poziva traži dozvolu. Pravila statusa su iz API specifikacije 31.07
 | # | Pitanje | Kako zatvoriti |
 |---|---|---|
 | Q1 | ~~Tačan `CustomizationID`~~ | **Zatvoreno:** ITU 01.10.2026 §1.3 → `urn:cen.eu:en16931:2017#compliant#urn:mfin.gov.rs:srbdt:2022` (tabela u ITU ima slovnu grešku `compliantt`) |
-| Q2 | Kako se u `PartyTaxScheme` predstavlja prodavac van PDV-a. ITU BT-32 pominje `NO-VAT` sa šemom `RS-VAT-STATUS`; ne kaže da li `RS{PIB}`/`VAT` treba izostaviti. ITU ne navodi `SS`/`PDV-RS-33` za ovaj slučaj. | Golden fixture: XML fakture koju je SEF prihvatio (SS + PDV-RS-33) |
-| Q3 | Najveća dozvoljena veličina i broj priloga | Nije u API spec ni ITU → swagger / demo test |
-| Q4 | Jedinica mere za sate (`HUR`) | ITU upućuje na EN 16931 liste → `GET get-unit-measures` na demo |
+| Q2 | ~~Prodavac van PDV-a u `PartyTaxScheme`~~ | **Zatvoreno:** u fakturi koju je SEF prihvatio (oktobar 2026) prodavac van PDV-a ima `RS{PIB}` / `VAT`, a stavke `SS` / 0 / `PDV-RS-33`. ITU (`NO-VAT` / `RS-VAT-STATUS`) to ne opisuje — praksa ima prednost, pokriveno golden testom. |
+| Q3 | ~~Broj i veličina priloga~~ | **Zatvoreno (potvrdio održavalac):** najviše 2 priloga, po 1 MB; podesivo. |
+| Q4 | ~~Jedinica mere~~ | **Zatvoreno:** `MON` i `HUR` prihvaćeni (golden fixture); pun spisak `GET /api/publicApi/get-unit-measures`. |
 | Q5 | Da li `executeValidation=true` vraća sve greške pre slanja kupcu | Demo test |
-| Q6 | Demo base URL nije naveden u API spec | Swagger / SEF podešavanja naloga |
-| Q7 | Format bankovnog računa u `PayeeFinancialAccount` (ITU ne propisuje) | Golden fixture |
+| Q6 | ~~Demo base URL~~ | **Zatvoreno:** `https://demoefaktura.mfin.gov.rs` (swagger: `/swagger/index.html`). |
+| Q7 | ~~Format računa u `PayeeFinancialAccount`~~ | **Zatvoreno:** 18 cifara bez crtica (golden fixture). |
+| Q8 | Da li kupac van PDV-a sme da ima `PartyTaxScheme` — sada se izostavlja kada je `vatRegistered: false` | Demo test sa takvim kupcem |

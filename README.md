@@ -22,6 +22,7 @@ MCP server koji AI asistentu omogućava da **pripremi i pošalje izlaznu e-faktu
 | `sef_ping` | Proverava ključ i vezu sa SEF-om | ne |
 | `sef_list_customers` | Kupci iz profila | ne |
 | `sef_list_vat_exemption_reasons` | Zvanične šifre izuzeća (npr. `PDV-RS-33`) | ne |
+| `sef_list_unit_measures` | Zvanične jedinice mere (npr. `MON`, `HUR`, `H87`) | ne |
 | `sef_draft_invoice` | Pravi UBL fakturu lokalno, vraća iznose i `approvalCode` | samo lokalno |
 | `sef_get_draft` | Čita nacrt (opciono sa XML-om) | ne |
 | `sef_send_invoice` | Šalje **odobren** nacrt na SEF | **da** |
@@ -52,7 +53,7 @@ Detalji: [SECURITY.md](SECURITY.md) i [docs/technical-spec.md](docs/technical-sp
 
 ## Status
 
-**v0.1 — rana faza.** Usklađeno sa SEF API specifikacijom od 31.07.2026 (SEF 3.14) i ITU od 01.10.2026. UBL generator prati SRB-CIUS strukturu, ali pre produkcije mora proći poređenje sa fakturom koju je SEF već prihvatio i test na demo okruženju (`executeValidation=true`). Vidi [docs/roadmap.md](docs/roadmap.md).
+**v0.1 — rana faza.** Usklađeno sa SEF API specifikacijom od 31.07.2026 (SEF 3.14) i ITU od 01.10.2026. UBL generator reprodukuje strukturu fakture koju je SEF prihvatio u produkciji (golden test). Pre produkcije još: test na demo okruženju (`executeValidation=true`). Vidi [docs/roadmap.md](docs/roadmap.md).
 
 ## Dokumentacija
 
