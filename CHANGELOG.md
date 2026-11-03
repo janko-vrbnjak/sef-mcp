@@ -3,7 +3,9 @@
 Format: [Keep a Changelog](https://keepachangelog.com/), versions: [SemVer](https://semver.org/).
 
 ## [Unreleased]
+
 ### Added
+
 - SEF 4.2.0 baseline: pre-upload checks for rules from releases 3.15.0–4.0.0 (`src/ubl/rules.ts`, `test/rules.test.ts`): supported tax categories (`VATCategoryNotAllowed`), rate only for `S` (`UBLTaxCategoryPercentNotAllowed`), withdrawn exemption code PDV-RS-36b-6, positive quantity and price, mandatory unit of measure. Same tax checks run on the profile.
 - Compliance matrix in technical-spec §11.
 - Golden test against an anonymised invoice SEF accepted in production (`test/fixtures/accepted-non-vat-services.xml`).
@@ -14,6 +16,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/), versions: [SemVer](http
 - Normative sources table (API spec 31.07.2026, ITU 01.10.2026, swagger) in technical spec.
 
 ### Changed
+
+- CI: `npm test` uses a shell-expanded `dist/test/*.test.js` glob so Node 20 runners find tests (quoted `**` globs are not expanded there).
+- Runtime dependency `zod` bumped to ^4.6.7 (GHSA-mrhx-c7xc-m3w5). Profile object defaults use `.prefault({})` so nested field defaults still apply under Zod 4.
 - Attachment defaults follow SEF limits: max 2 files, 1 MB each (was 5 / 5 MB). Attachment reference ID is the file name without `.pdf`.
 - Buyer `PartyTaxScheme` is emitted only for VAT-registered customers; `PostalZone` is optional.
 - `CustomizationID` is now the base SRB-CIUS value (ITU 01.10.2026 §1.3); the extension form is not used.
@@ -24,7 +29,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/), versions: [SemVer](http
 - Cancel tool description reflects SEF status rules (Draft / New / Sending error).
 
 ## [0.1.0] — 2026-11-02
+
 ### Added
+
 - Generic core configured by a local company profile (ADR 0001).
 - Tools: check_setup, ping, list_customers, list_vat_exemption_reasons, draft_invoice, get_draft, send_invoice, get_invoice, list_invoice_ids, cancel_invoice.
 - UBL 2.1 / SRB-CIUS builder with BigInt money arithmetic (to be validated against SEF — see roadmap 0.2).

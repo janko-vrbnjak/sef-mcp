@@ -11,10 +11,20 @@ import { taxRuleProblem, UNIT_CODE_RE } from "./ubl/rules.js";
 
 const pib = z.string().regex(/^\d{9}$/, "PIB must be exactly 9 digits");
 const mb = z.string().regex(/^\d{8}$/, "Matični broj must be exactly 8 digits");
-const isoCountry = z.string().regex(/^[A-Z]{2}$/).default("RS");
-const unitCode = z.string().regex(UNIT_CODE_RE, "UN/ECE Rec 20 code, e.g. H87, HUR, MON (list: sef_list_unit_measures)");
+const isoCountry = z
+  .string()
+  .regex(/^[A-Z]{2}$/)
+  .default("RS");
+const unitCode = z
+  .string()
+  .regex(
+    UNIT_CODE_RE,
+    "UN/ECE Rec 20 code, e.g. H87, HUR, MON (list: sef_list_unit_measures)",
+  );
 const notes = z.array(z.string().min(1).max(1000)).max(10);
-const decimal = z.string().regex(/^\d+(\.\d+)?$/, "use a decimal string, e.g. \"20\" or \"0\"");
+const decimal = z
+  .string()
+  .regex(/^\d+(\.\d+)?$/, 'use a decimal string, e.g. "20" or "0"');
 
 export const AddressSchema = z.object({
   street: z.string().min(1),
@@ -39,7 +49,12 @@ export const SellerSchema = z.object({
   mb,
   address: AddressSchema,
   email: z.string().email().optional(),
-  bankAccount: z.string().regex(/^\d{3}-?\d{1,13}-?\d{2}$/, "Serbian account format, e.g. 265-0000000000000-00"),
+  bankAccount: z
+    .string()
+    .regex(
+      /^\d{3}-?\d{1,13}-?\d{2}$/,
+      "Serbian account format, e.g. 265-0000000000000-00",
+    ),
   vatRegistered: z.boolean(),
   defaultTax: TaxRuleSchema,
 });
@@ -51,7 +66,10 @@ export const CustomerSchema = z.object({
   pib,
   mb: mb.optional(),
   /** Public-sector budget user number (JBKJS) */
-  jbkjs: z.string().regex(/^\d{5}$/).optional(),
+  jbkjs: z
+    .string()
+    .regex(/^\d{5}$/)
+    .optional(),
   address: AddressSchema,
   email: z.string().email().optional(),
   /** Buyer in the VAT system → PartyTaxScheme RS{PIB}/VAT is emitted. Most B2B buyers are; set false otherwise. */
@@ -67,7 +85,8 @@ export const CustomerSchema = z.object({
       sendToCir: z.enum(["Yes", "No"]).optional(),
       tax: TaxRuleSchema.optional(),
     })
-    .default({}),
+    // prefault: parse {} through nested field defaults (Zod 4 .default short-circuits on output type)
+    .prefault({}),
 });
 
 export const ProfileSchema = z.object({
@@ -88,7 +107,7 @@ export const ProfileSchema = z.object({
       /** Optional regex an invoice number must match, e.g. "^INV-\\d{4}-\\d{3}$" */
       numberPattern: z.string().optional(),
     })
-    .default({}),
+    .prefault({}),
   customers: z.array(CustomerSchema).default([]),
 });
 
@@ -109,19 +128,27 @@ export function parseProfile(raw: unknown): Profile {
   const profile = result.data;
   const ids = new Set<string>();
   for (const c of profile.customers) {
-    if (ids.has(c.id)) throw new Error(`Invalid profile: duplicate customer id "${c.id}"`);
+    if (ids.has(c.id))
+      throw new Error(`Invalid profile: duplicate customer id "${c.id}"`);
     ids.add(c.id);
   }
-  const taxRules: Array<[string, TaxRule]> = [["seller.defaultTax", profile.seller.defaultTax]];
-  for (const c of profile.customers) if (c.defaults.tax) taxRules.push([`customers.${c.id}.defaults.tax`, c.defaults.tax]);
+  const taxRules: Array<[string, TaxRule]> = [
+    ["seller.defaultTax", profile.seller.defaultTax],
+  ];
+  for (const c of profile.customers)
+    if (c.defaults.tax)
+      taxRules.push([`customers.${c.id}.defaults.tax`, c.defaults.tax]);
   for (const [where, rule] of taxRules) {
     const problem = taxRuleProblem(rule);
     if (problem) throw new Error(`Invalid profile: ${where}: ${problem}`);
   }
-  if (!profile.seller.vatRegistered && profile.seller.defaultTax.category === "S") {
+  if (
+    !profile.seller.vatRegistered &&
+    profile.seller.defaultTax.category === "S"
+  ) {
     throw new Error(
       "Invalid profile: seller.vatRegistered is false but defaultTax.category is S (standard VAT). " +
-        "Ask your accountant for the correct category and exemption code."
+        "Ask your accountant for the correct category and exemption code.",
     );
   }
   return profile;
@@ -138,11 +165,16 @@ export function loadProfile(path: string): Profile {
   try {
     raw = JSON.parse(text);
   } catch (e) {
-    throw new Error(`Profile at ${path} is not valid JSON: ${(e as Error).message}`);
+    throw new Error(
+      `Profile at ${path} is not valid JSON: ${(e as Error).message}`,
+    );
   }
   return parseProfile(raw);
 }
 
-export function findCustomer(profile: Profile, idOrPib: string): Customer | undefined {
+export function findCustomer(
+  profile: Profile,
+  idOrPib: string,
+): Customer | undefined {
   return profile.customers.find((c) => c.id === idOrPib || c.pib === idOrPib);
 }
