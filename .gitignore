@@ -1,5 +1,8 @@
 node_modules/
 dist/
+build/
+*.mcpb
+*.plugin
 coverage/
 *.log
 .DS_Store

@@ -4,6 +4,12 @@
 
 MCP server koji AI asistentu omogućava da **pripremi i pošalje izlaznu e-fakturu na SEF** — na tvom računaru, sa tvojim API ključem, bez posrednika.
 
+## Niste programer?
+
+**→ [Uputstvo za korisnike](docs/za-korisnike.md)**: instalacija dvoklikom u Claude aplikaciji, bez terminala, bez Node.js-a i bez menadžera lozinki. Podaci o firmi i kupcima se unose kroz razgovor.
+
+Ostatak ove stranice je za tehničke korisnike i developere.
+
 ## Zašto još jedan SEF MCP
 
 | | Hostovani MCP servisi | sef-mcp |
@@ -19,6 +25,8 @@ MCP server koji AI asistentu omogućava da **pripremi i pošalje izlaznu e-faktu
 | Alat | Šta radi | Menja stanje? |
 |---|---|---|
 | `sef_check_setup` | Okruženje, sigurnosni prekidači, profil | ne |
+| `sef_setup_company` | Podešava firmu kroz razgovor (pregled → potvrda) | samo lokalno |
+| `sef_add_customer` | Dodaje ili menja kupca (pregled → potvrda) | samo lokalno |
 | `sef_ping` | Proverava ključ i vezu sa SEF-om | ne |
 | `sef_list_customers` | Kupci iz profila | ne |
 | `sef_list_vat_exemption_reasons` | Zvanične šifre izuzeća (npr. `PDV-RS-33`) | ne |
@@ -57,9 +65,12 @@ Detalji: [SECURITY.md](SECURITY.md) i [docs/technical-spec.md](docs/technical-sp
 
 ## Dokumentacija
 
+- [Uputstvo za korisnike (bez programiranja)](docs/za-korisnike.md)
+- [Privatnost](docs/privatnost.md)
 - [Funkcionalna specifikacija](docs/functional-spec.md)
 - [Tehnička specifikacija](docs/technical-spec.md)
-- [Podešavanje](docs/setup.md)
+- [Podešavanje za tehničke korisnike](docs/setup.md)
+- [Pakovanje: Claude ekstenzija i skillovi](docs/technical-spec.md#12-packaging-and-release)
 - [Odluke o arhitekturi (ADR)](docs/adr/)
 - [Doprinos projektu](CONTRIBUTING.md)
 

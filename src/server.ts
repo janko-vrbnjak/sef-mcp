@@ -8,6 +8,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { redact } from "./safety.js";
+import { explainSefError } from "./sef/errors.js";
+import { CompanyInput, CustomerInput, type CompanyArgs, type CustomerArgs } from "./setup.js";
 import { DraftInvoiceInput, type DraftInvoiceArgs, SefTools } from "./tools.js";
 
 const VERSION = "0.1.0";
@@ -26,7 +28,9 @@ export async function startServer(tools: SefTools): Promise<void> {
         return { content: [{ type: "text", text: redact(JSON.stringify(out, null, 2), secrets) }] };
       } catch (err) {
         const e = err as Error & { body?: string; status?: number };
-        const detail = [e.message, e.status ? `HTTP ${e.status}` : "", e.body ?? ""].filter(Boolean).join("\n");
+        const raw = [e.message, e.status ? `HTTP ${e.status}` : "", e.body ?? ""].filter(Boolean).join("\n");
+        const explained = explainSefError(raw, e.status);
+        const detail = explained.length ? `${raw}\n\nObjašnjenje:\n- ${explained.join("\n- ")}` : raw;
         return { content: [{ type: "text", text: redact(detail, secrets) }], isError: true };
       }
     };
@@ -43,6 +47,35 @@ export async function startServer(tools: SefTools): Promise<void> {
       annotations: readOnly,
     },
     wrap(() => tools.checkSetup())
+  );
+
+  const localWrite = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false };
+
+  server.registerTool(
+    "sef_setup_company",
+    {
+      title: "Set up the company profile",
+      description:
+        "Creates or updates the seller (your company) in the local profile, so no JSON has to be edited by hand. " +
+        "Call without confirmCode to get a preview and a confirmCode; show the preview to the user; only after they " +
+        "confirm, call again with the same values plus confirmCode. Nothing is sent to SEF.",
+      inputSchema: CompanyInput,
+      annotations: localWrite,
+    },
+    wrap((a: CompanyArgs) => tools.setupCompany(a))
+  );
+
+  server.registerTool(
+    "sef_add_customer",
+    {
+      title: "Add or update a customer",
+      description:
+        "Adds a customer to the local profile (or replaces the one with the same id). Same preview → confirm flow as " +
+        "sef_setup_company. Nothing is sent to SEF.",
+      inputSchema: CustomerInput,
+      annotations: localWrite,
+    },
+    wrap((a: CustomerArgs) => tools.addCustomer(a))
   );
 
   server.registerTool(

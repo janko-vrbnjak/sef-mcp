@@ -13,7 +13,7 @@ export type SefEnvironment = "demo" | "prod";
 export interface RuntimeConfig {
   env: SefEnvironment;
   apiKey: string | undefined;
-  profilePath: string | undefined;
+  profilePath: string;
   dataDir: string;
   attachmentsDir: string | undefined;
   readOnly: boolean;
@@ -36,13 +36,17 @@ export function loadRuntimeConfig(env: NodeJS.ProcessEnv = process.env): Runtime
   if (rawEnv !== "demo" && rawEnv !== "prod") {
     throw new Error(`SEF_ENV must be "demo" or "prod" (got "${rawEnv}")`);
   }
-  const apiKey = env.SEF_API_KEY?.trim() || undefined;
+  // Per-environment keys (used by the Claude Desktop extension, where both keys live in the OS keychain)
+  // take precedence over the single SEF_API_KEY. Empty strings count as "not set".
+  const envKey = rawEnv === "prod" ? env.SEF_API_KEY_PROD : env.SEF_API_KEY_DEMO;
+  const apiKey = envKey?.trim() || env.SEF_API_KEY?.trim() || undefined;
   if (apiKey && looksLikeUnresolvedSecretRef(apiKey)) {
     throw new Error(
       "SEF_API_KEY looks like an unresolved secret reference (e.g. op://...). " +
         "Start the server through your secret manager, e.g. `op run --env-file=... -- sef-mcp serve`."
     );
   }
+  const dataDir = resolve(env.SEF_MCP_DATA_DIR?.trim() || join(homedir(), ".sef-mcp"));
   const timeout = Number(env.SEF_MCP_TIMEOUT_MS ?? 30000);
   // SEF limits (confirmed by the maintainer, 2026-11): 2 attachments, 1 MB each. Configurable downwards or,
   // if SEF raises them, upwards.
@@ -51,9 +55,12 @@ export function loadRuntimeConfig(env: NodeJS.ProcessEnv = process.env): Runtime
   return {
     env: rawEnv,
     apiKey,
-    profilePath: env.SEF_MCP_PROFILE ? resolve(env.SEF_MCP_PROFILE) : undefined,
-    dataDir: resolve(env.SEF_MCP_DATA_DIR ?? join(homedir(), ".sef-mcp")),
-    attachmentsDir: env.SEF_MCP_ATTACHMENTS_DIR ? resolve(env.SEF_MCP_ATTACHMENTS_DIR) : undefined,
+    // Profile defaults to <dataDir>/profile.json so a guided setup can create it in place.
+    profilePath: env.SEF_MCP_PROFILE?.trim() ? resolve(env.SEF_MCP_PROFILE) : join(dataDir, "profile.json"),
+    // One data dir may serve both environments: every audit entry records its env, and the
+    // duplicate-number check filters by it.
+    dataDir,
+    attachmentsDir: env.SEF_MCP_ATTACHMENTS_DIR?.trim() ? resolve(env.SEF_MCP_ATTACHMENTS_DIR) : undefined,
     readOnly: bool(env.SEF_MCP_READ_ONLY),
     allowProdWrite: bool(env.SEF_MCP_ALLOW_PROD_WRITE),
     maxAttachmentBytes: Number.isFinite(maxAtt) && maxAtt > 0 ? maxAtt : 1024 * 1024,

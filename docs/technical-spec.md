@@ -43,7 +43,8 @@ Secrets enter only through environment variables, injected by a secret manager (
 |---|---|---|
 | `SEF_ENV` | `demo` | `demo` or `prod` — selects base URL |
 | `SEF_API_KEY` | — | SEF API key (never logged/returned). Unresolved `op://` refs are rejected. |
-| `SEF_MCP_PROFILE` | — (required) | Path to profile JSON |
+| `SEF_API_KEY_DEMO` / `SEF_API_KEY_PROD` | — | Per-environment keys (used by the Claude extension). The one matching `SEF_ENV` wins over `SEF_API_KEY`; empty counts as unset. |
+| `SEF_MCP_PROFILE` | `<SEF_MCP_DATA_DIR>/profile.json` | Path to profile JSON. If the file does not exist, the server starts in **setup mode** (see §4). |
 | `SEF_MCP_DATA_DIR` | `~/.sef-mcp` | Drafts + audit log (dir `0700`, files `0600`) |
 | `SEF_MCP_ATTACHMENTS_DIR` | — | Only directory attachments may come from |
 | `SEF_MCP_READ_ONLY` | `false` | Blocks send/cancel |
@@ -70,7 +71,13 @@ Schema changes bump `version` and ship a migration note in CHANGELOG.
 
 | Tool | Input | Output | Annotations |
 |---|---|---|---|
-| `sef_check_setup` | — | env, switches, profile summary | readOnly |
+| `sef_check_setup` | — | env, switches, `profileConfigured`, profile summary or next step | readOnly |
+| `sef_setup_company` | seller fields, optional `confirmCode` | preview + `confirmCode`, or saved profile | local write |
+| `sef_add_customer` | customer fields, optional `confirmCode` | preview + `confirmCode`, or saved profile | local write |
+
+**Setup mode.** Without a profile all invoice tools return a Serbian message pointing to `sef_setup_company`. Setup tools follow ADR 0002: the first call validates and returns a preview plus `confirmCode` (first 8 hex of SHA-256 of the resulting profile); only a second call with identical values and that code writes. Writes are atomic (temp file + rename), mode `0600`, previous file kept as `profile.json.bak`. A non-VAT seller without an explicit rule gets `SS / 0 / PDV-RS-33` with a warning to confirm with the accountant.
+
+**Error explanations.** `src/sef/errors.ts` maps documented or observed SEF codes (and HTTP 401/403) to Serbian explanations, appended to tool errors under "Objašnjenje". Unknown codes get no explanation — never a guess.
 | `sef_ping` | — | reachable, count of exemption reasons | readOnly, openWorld |
 | `sef_list_customers` | — | customers | readOnly |
 | `sef_list_vat_exemption_reasons` | — | SEF list | readOnly, openWorld |
@@ -183,6 +190,17 @@ Rules from SEF release notes that affect outgoing invoices, and where sef-mcp en
 Releases 3.15.1, 3.16.1–3.16.4, 3.17.2 and 4.1.1 are performance fixes only; 4.1.0 changes only VAT recording (`vat-recording/group`), which sef-mcp does not use.
 
 When SEF publishes a new release: read its notes, add rows here, add a test named after the release, update `docs/reference/`.
+
+## 12. Packaging and release
+
+| Artifact | Build | For |
+|---|---|---|
+| `dist/sef-mcp-<v>.mcpb` | `npm run pack:mcpb` (stages runtime files in `build/mcpb`, `npm ci --omit=dev --ignore-scripts`, `mcpb validate` + `mcpb pack`) | Claude Desktop / Cowork: one-click install, bundled Node.js, keys in the OS keychain |
+| `dist/sef-fakture-<v>.plugin` | `npm run pack:plugin` | Skills `sef-podesavanje` and `sef-fakturisanje` (Cowork, Claude Code) |
+
+Extension settings → environment variables (`packaging/mcpb/manifest.json`): `sef_env` → `SEF_ENV`, `api_key_demo` / `api_key_prod` (sensitive) → `SEF_API_KEY_DEMO` / `SEF_API_KEY_PROD`, `allow_prod_write` → `SEF_MCP_ALLOW_PROD_WRITE`, `data_dir` → `SEF_MCP_DATA_DIR`, `attachments_dir` → `SEF_MCP_ATTACHMENTS_DIR` (created if missing). The manifest version is overwritten from `package.json` at pack time.
+
+Release checklist: `npm test` green → bump `package.json` and `plugins/sef-fakture/.claude-plugin/plugin.json` → both pack scripts → install the `.mcpb` on a clean machine without Node.js and run the onboarding skill on demo → GitHub Release with both files and the CHANGELOG section.
 
 ## 10. Conventions
 

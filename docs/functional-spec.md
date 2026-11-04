@@ -60,8 +60,18 @@ Klijent pre poziva traži dozvolu. Pravila statusa su iz API specifikacije 31.07
 Javni sektor (SEF 4.2.0): kada kupac odbije fakturu na SEF-u, povezana obaveza u CRF-u automatski prelazi u „Odbijena” ako je bila „Aktivna” (ako je „Započeta” ili „Izmirena”, ostaje nepromenjena). Ako kupac kasnije prihvati fakturu, SEF traži od CRF-a ponovnu aktivaciju.
 
 ### UC-4 Onboarding nove firme
-1. `sef-mcp init` pravi profil iz primera.
-2. Korisnik popunjava podatke; validacija javlja tačno polje i razlog greške.
+
+**Netehnički korisnik (Claude ekstenzija + skill `sef-podesavanje`, ADR 0003):**
+1. Instalacija `.mcpb` dvoklikom; demo ključ se unosi u podešavanja ekstenzije (sigurno skladište sistema), nikad u razgovor.
+2. Bez profila server radi u režimu podešavanja; asistent pita za podatke firme i poziva `sef_setup_company` → pregled → izričita potvrda → upis.
+3. Isto za svakog kupca (`sef_add_customer`).
+4. `sef_ping`, pa probna faktura na demo okruženju.
+
+Kriterijum prihvatanja: korisnik bez tehničkog znanja završi korake 1–4 sam za manje od 30 minuta.
+
+**Tehnički korisnik:**
+1. `sef-mcp init` pravi profil iz primera (ili isti alati za podešavanje).
+2. Validacija javlja tačno polje i razlog greške.
 3. `sef-mcp doctor --ping` potvrđuje ključ i okruženje.
 4. Prva faktura na demo okruženju.
 

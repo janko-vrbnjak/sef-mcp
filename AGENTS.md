@@ -21,6 +21,8 @@ You are working on **sef-mcp**, a local-first MCP server for the Serbian e-invoi
 - Never add an environment variable that changes the SEF base URL.
 - Never weaken: demo default, `SEF_MCP_ALLOW_PROD_WRITE`, `SEF_MCP_READ_ONLY`, approvalCode check, hash re-verification, attachment confinement, destructive tool annotations.
 - Money only via `src/money.ts` (BigInt). No floats for amounts.
+- Profile writes go only through `src/setup.ts` (preview → confirmCode → atomic write + backup). Never add a tool that writes the profile in one step.
+- Skills in `plugins/sef-fakture` encode the user-facing safety rules (approval per draft, environment banner, no keys in chat). Keep them in sync with tool names and behaviour.
 - `src/ubl/build.ts` stays pure and deterministic.
 - stdout belongs to the MCP protocol: diagnostics → stderr.
 - No new runtime dependency without the maintainer's approval.

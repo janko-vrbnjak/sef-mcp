@@ -1,0 +1,102 @@
+{
+  "manifest_version": "0.3",
+  "name": "sef-mcp",
+  "display_name": "SEF e-fakture",
+  "version": "0.0.0",
+  "description": "Pripremite i pošaljite e-fakturu na SEF iz razgovora sa Claude-om — lokalno, uz vaše odobrenje pre svakog slanja.",
+  "long_description": "sef-mcp radi na vašem računaru. Claude priprema fakturu iz opisa, vi pregledate iznose i kupca, i tek posle vašeg odobrenja faktura ide na SEF. API ključ se čuva u sigurnom skladištu operativnog sistema (Keychain na Mac-u, Credential Manager na Windows-u), nikad u fajlu. Podrazumevano radi na demo SEF-u; produkcija zahteva dva izričita podešavanja. Podaci o firmi i kupcima unose se kroz razgovor — bez uređivanja fajlova.",
+  "author": {
+    "name": "Valorys Systems",
+    "url": "https://github.com/jvrbnjak89"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jvrbnjak89/sef-mcp"
+  },
+  "homepage": "https://github.com/jvrbnjak89/sef-mcp",
+  "documentation": "https://github.com/jvrbnjak89/sef-mcp/blob/main/docs/za-korisnike.md",
+  "support": "https://github.com/jvrbnjak89/sef-mcp/issues",
+  "license": "MIT",
+  "keywords": ["sef", "efaktura", "e-faktura", "e-invoice", "srbija", "serbia", "ubl", "knjigovodstvo"],
+  "server": {
+    "type": "node",
+    "entry_point": "dist/src/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/src/index.js", "serve"],
+      "env": {
+        "SEF_ENV": "${user_config.sef_env}",
+        "SEF_API_KEY_DEMO": "${user_config.api_key_demo}",
+        "SEF_API_KEY_PROD": "${user_config.api_key_prod}",
+        "SEF_MCP_ALLOW_PROD_WRITE": "${user_config.allow_prod_write}",
+        "SEF_MCP_DATA_DIR": "${user_config.data_dir}",
+        "SEF_MCP_ATTACHMENTS_DIR": "${user_config.attachments_dir}"
+      }
+    }
+  },
+  "user_config": {
+    "sef_env": {
+      "type": "string",
+      "title": "Okruženje: demo ili prod",
+      "description": "Upišite demo za probu (bez poreskog efekta) ili prod za prave fakture. Počnite sa demo.",
+      "default": "demo",
+      "required": false
+    },
+    "api_key_demo": {
+      "type": "string",
+      "title": "API ključ — demo SEF",
+      "description": "Ključ sa demoefaktura.mfin.gov.rs (SEF Administrator → API). Čuva se u sigurnom skladištu sistema.",
+      "sensitive": true,
+      "required": false
+    },
+    "api_key_prod": {
+      "type": "string",
+      "title": "API ključ — produkcija",
+      "description": "Ključ sa efaktura.mfin.gov.rs. Unesite ga tek kad je proba na demo SEF-u prošla. Čuva se u sigurnom skladištu sistema.",
+      "sensitive": true,
+      "required": false
+    },
+    "allow_prod_write": {
+      "type": "boolean",
+      "title": "Dozvoli slanje pravih faktura",
+      "description": "Drugi prekidač za produkciju. Dok je isključen, ni sa okruženjem prod nijedna faktura ne može biti poslata ni otkazana.",
+      "default": false,
+      "required": false
+    },
+    "data_dir": {
+      "type": "directory",
+      "title": "Folder za podatke",
+      "description": "Ovde se čuvaju profil firme, nacrti faktura i dnevnik slanja.",
+      "default": "${HOME}/SEF-fakture",
+      "required": false
+    },
+    "attachments_dir": {
+      "type": "directory",
+      "title": "Folder za priloge (PDF)",
+      "description": "Samo iz ovog foldera mogu da se prilažu PDF-ovi uz fakturu (najviše 2, do 1 MB).",
+      "default": "${HOME}/SEF-fakture/prilozi",
+      "required": false
+    }
+  },
+  "tools": [
+    { "name": "sef_check_setup", "description": "Prikazuje okruženje, sigurnosna podešavanja i da li je firma podešena." },
+    { "name": "sef_setup_company", "description": "Podešava podatke o vašoj firmi kroz razgovor (pregled pa potvrda)." },
+    { "name": "sef_add_customer", "description": "Dodaje ili menja kupca (pregled pa potvrda)." },
+    { "name": "sef_ping", "description": "Proverava vezu sa SEF-om i API ključ." },
+    { "name": "sef_list_customers", "description": "Prikazuje kupce iz profila." },
+    { "name": "sef_list_vat_exemption_reasons", "description": "Zvanične šifre oslobođenja od PDV-a sa SEF-a." },
+    { "name": "sef_list_unit_measures", "description": "Zvanične jedinice mere sa SEF-a." },
+    { "name": "sef_draft_invoice", "description": "Pravi nacrt fakture lokalno; ništa se ne šalje." },
+    { "name": "sef_get_draft", "description": "Prikazuje sačuvani nacrt." },
+    { "name": "sef_send_invoice", "description": "Šalje odobreni nacrt na SEF." },
+    { "name": "sef_get_invoice", "description": "Status fakture na SEF-u." },
+    { "name": "sef_list_invoice_ids", "description": "Lista poslatih faktura po statusu i periodu." },
+    { "name": "sef_cancel_invoice", "description": "Otkazuje fakturu koju kupac još nije dobio." },
+    { "name": "sef_storno_invoice", "description": "Stornira poslatu, prihvaćenu ili odbijenu fakturu." }
+  ],
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": { "node": ">=20.11.0" }
+  },
+  "privacy_policies": ["https://github.com/jvrbnjak89/sef-mcp/blob/main/docs/privatnost.md"]
+}

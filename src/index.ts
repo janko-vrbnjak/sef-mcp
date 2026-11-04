@@ -17,10 +17,10 @@ function fail(msg: string): never {
   process.exit(1);
 }
 
+/** A missing profile is not an error: the server starts in setup mode and the assistant guides the user. */
 function setup(): SefTools {
   const cfg = loadRuntimeConfig();
-  if (!cfg.profilePath) fail("SEF_MCP_PROFILE is not set. Run `sef-mcp init ./profile.json` and see docs/setup.md.");
-  const profile = loadProfile(cfg.profilePath);
+  const profile = existsSync(cfg.profilePath) ? loadProfile(cfg.profilePath) : undefined;
   return new SefTools(cfg, profile);
 }
 

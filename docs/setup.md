@@ -19,6 +19,8 @@ npm test          # mora biti zeleno
 
 ## 2. Profil firme
 
+Profil možeš napraviti na dva načina: kroz razgovor (alati `sef_setup_company` i `sef_add_customer`; bez profila server radi u režimu podešavanja) ili ručno, iz primera. Ako `SEF_MCP_PROFILE` nije zadat, koristi se `<SEF_MCP_DATA_DIR>/profile.json`.
+
 ```bash
 node dist/src/index.js init ~/.config/sef-mcp/profile.json
 ```

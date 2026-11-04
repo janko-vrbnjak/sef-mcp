@@ -2,13 +2,14 @@
  * Tool logic, independent of the MCP SDK so it can be unit-tested and reused
  * (CLI, future HTTP transport).
  */
-import { readFileSync, statSync } from "node:fs";
+import { mkdirSync, readFileSync, statSync } from "node:fs";
 import { basename } from "node:path";
 import { z } from "zod";
 import { assertWriteAllowed, type RuntimeConfig } from "./env.js";
 import { findCustomer, TaxRuleSchema, type Profile } from "./profile.js";
 import { resolveInside } from "./safety.js";
 import { SefClient, type SendToCir } from "./sef/client.js";
+import { ProfileStore, type CompanyArgs, type CustomerArgs } from "./setup.js";
 import { Store } from "./store.js";
 import { buildInvoiceXml, type UblAttachment, type UblLine } from "./ubl/build.js";
 
@@ -65,16 +66,48 @@ function addDays(date: string, days: number): string {
 
 export class SefTools {
   readonly store: Store;
+  readonly profiles: ProfileStore;
   private client: SefClient | undefined;
+  private current: Profile | undefined;
 
+  /** `profile` may be undefined: the server then runs in setup mode until sef_setup_company saves one. */
   constructor(
     readonly cfg: RuntimeConfig,
-    readonly profile: Profile,
+    profile: Profile | undefined,
     clientOverride?: SefClient,
     private readonly now: () => Date = () => new Date()
   ) {
     this.store = new Store(cfg.dataDir);
+    // The extension points this at a default folder that may not exist yet; create it so attaching works.
+    if (cfg.attachmentsDir) mkdirSync(cfg.attachmentsDir, { recursive: true, mode: 0o700 });
+    this.profiles = new ProfileStore(cfg.profilePath);
+    this.current = profile;
     this.client = clientOverride;
+  }
+
+  get hasProfile(): boolean {
+    return this.current !== undefined;
+  }
+
+  get profile(): Profile {
+    if (!this.current) {
+      throw new Error(
+        "Firma još nije podešena. Pokrenite podešavanje (sef_setup_company), pa dodajte kupce (sef_add_customer)."
+      );
+    }
+    return this.current;
+  }
+
+  setupCompany(args: CompanyArgs) {
+    const r = this.profiles.setupCompany(args);
+    if (r.saved) this.current = r.profile;
+    return r;
+  }
+
+  addCustomer(args: CustomerArgs) {
+    const r = this.profiles.addCustomer(args);
+    if (r.saved) this.current = r.profile;
+    return r;
   }
 
   /** Today's date in Serbia (SEF works in Europe/Belgrade), YYYY-MM-DD. */
@@ -91,14 +124,26 @@ export class SefTools {
   }
 
   checkSetup() {
-    const p = this.profile;
-    return {
+    const base = {
       environment: this.cfg.env,
       apiKeyConfigured: Boolean(this.cfg.apiKey),
       readOnly: this.cfg.readOnly,
       prodWritesEnabled: this.cfg.env === "prod" && this.cfg.allowProdWrite,
       dataDir: this.cfg.dataDir,
       attachmentsDir: this.cfg.attachmentsDir ?? null,
+      profilePath: this.cfg.profilePath,
+    };
+    if (!this.current) {
+      return {
+        ...base,
+        profileConfigured: false,
+        next: "Firma nije podešena: vodite korisnika kroz sef_setup_company, pa sef_add_customer za svakog kupca.",
+      };
+    }
+    const p = this.current;
+    return {
+      ...base,
+      profileConfigured: true,
       seller: { name: p.seller.name, pib: p.seller.pib, vatRegistered: p.seller.vatRegistered, defaultTax: p.seller.defaultTax },
       customers: p.customers.length,
     };
