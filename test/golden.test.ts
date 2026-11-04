@@ -1,6 +1,7 @@
 /**
- * Golden test: the builder must reproduce the structure of an invoice that
- * SEF accepted in production (anonymised in test/fixtures).
+ * Golden test: the builder must reproduce the structure of an invoice that SEF
+ * itself produced in production — created in the SEF web portal and exported as
+ * UBL (anonymised in test/fixtures). It was not uploaded through the API.
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";

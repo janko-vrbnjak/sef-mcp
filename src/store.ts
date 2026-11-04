@@ -84,6 +84,26 @@ export class Store {
     appendFileSync(this.auditFile, JSON.stringify({ ts: new Date().toISOString(), ...entry }) + "\n", { mode: 0o600 });
   }
 
+  /**
+   * True if SEF's validation (UBLDocumentNotValid) rejected an upload of this exact draft in this environment.
+   * Only then may the draft be re-sent with executeValidation=false (see sendInvoice).
+   */
+  validationRejected(env: string, draftId: string): boolean {
+    if (!existsSync(this.auditFile)) return false;
+    for (const line of readFileSync(this.auditFile, "utf8").split("\n")) {
+      if (!line) continue;
+      try {
+        const r = JSON.parse(line) as { action?: string; ok?: boolean; env?: string; draftId?: string; body?: string };
+        if (r.action === "send" && r.ok === false && r.env === env && r.draftId === draftId && (r.body ?? "").includes("UBLDocumentNotValid")) {
+          return true;
+        }
+      } catch {
+        /* ignore corrupt line */
+      }
+    }
+    return false;
+  }
+
   /** Invoice numbers already sent successfully in this environment (from the audit log). */
   sentNumbers(env: string): Set<string> {
     const out = new Set<string>();

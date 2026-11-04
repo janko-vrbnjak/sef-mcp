@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Anonymised structure of a non-VAT (SS / PDV-RS-33) services invoice that SEF accepted in production (October 2026).
-     Only values were changed; element structure, order and formatting are as accepted. Attachments replaced by a tiny PDF stub. -->
+<!-- Anonymised structure of a non-VAT (SS / PDV-RS-33) services invoice created by hand in the SEF web portal in production (October 2026) and exported by SEF as UBL.
+     It shows what SEF itself produces; it was NOT uploaded through the API (no executeValidation run).
+     Only values were changed; element structure, order and formatting are as exported. Attachments replaced by a tiny PDF stub. -->
 <Invoice xmlns:cec="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:sbt="http://mfin.gov.rs/srbdt/srbdtext" xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2">
   <cbc:CustomizationID>urn:cen.eu:en16931:2017#compliant#urn:mfin.gov.rs:srbdt:2022</cbc:CustomizationID>
   <cbc:ID>PR-2026-001</cbc:ID>

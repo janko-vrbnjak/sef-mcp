@@ -17,9 +17,11 @@ Sve radi na vašem računaru. Vaš SEF ključ se čuva u sigurnom skladištu sis
 ## Podešavanje u 5 koraka
 
 ### 1. Instalirajte ekstenziju „SEF e-fakture“
+
 Sa [stranice izdanja projekta](https://github.com/jvrbnjak89/sef-mcp/releases) preuzmite fajl `sef-mcp-….mcpb`, dva puta kliknite na njega i u Claude aplikaciji izaberite **Install**.
 
 ### 2. Napravite probni (demo) ključ
+
 1. Prijavite se na **demo** SEF: demoefaktura.mfin.gov.rs
 2. Otvorite **SEF Administrator → API** i generišite ključ.
 3. U Claude aplikaciji otvorite podešavanja ekstenzije **SEF e-fakture** i ključ nalepite u polje **„API ključ — demo SEF“**.
@@ -28,14 +30,17 @@ Sa [stranice izdanja projekta](https://github.com/jvrbnjak89/sef-mcp/releases) p
 Ključ nikad ne lepite u razgovor sa Claude-om — samo u ovo polje.
 
 ### 3. Dodajte skillove „sef-fakture“
+
 Sa iste stranice preuzmite `sef-fakture-….plugin` i otvorite ga u Claude aplikaciji. Skillovi Claude-u govore kako da vas vodi kroz podešavanje i fakturisanje.
 
 ### 4. Recite Claude-u: „Podesi moju firmu za SEF“
+
 Claude će vas pitati za naziv, PIB, matični broj, adresu, račun i da li ste u sistemu PDV-a, a zatim za vaše kupce. Možete mu poslati i staru fakturu, pa će podatke prepisati. Pre svakog čuvanja pokazaće vam pregled koji potvrđujete.
 
 PDV pravilo (npr. „nije obveznik PDV-a, član 33“) potvrdite sa svojim knjigovođom.
 
 ### 5. Probna faktura
+
 Recite „Napravi probnu fakturu“. Faktura ide na **demo** SEF i nema poreski efekat. Proverite je na demo portalu.
 
 ## Prelazak na prave fakture
@@ -69,6 +74,6 @@ Kad Claude traži dozvolu za slanje, otkazivanje ili storno, **nikad ne birajte 
 ## Podrška
 
 - Prijava problema: [GitHub issues](https://github.com/jvrbnjak89/sef-mcp/issues) (bez ključeva i bez pravih podataka kupaca!)
-- Pomoć pri podešavanju i podrška: [kontakt za podršku — dopuniti]
+- Pomoć pri podešavanju i podrška: support@valorys.rs
 
 Alat nije zvaničan proizvod Ministarstva finansija. Za sadržaj i poresku ispravnost faktura odgovara izdavalac.

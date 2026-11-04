@@ -27,11 +27,13 @@ const BY_CODE: Record<string, Explanation> = {
     source: "SEF 3.14; sef-mcp Q9",
   },
   "RS-R-005": {
-    meaning: "SEF traži šifru datuma poreske obaveze (BT-8) i na ovoj fakturi.",
+    meaning:
+      "SEF-ova validacija traži šifru datuma poreske obaveze (BT-8), iako se ona po uputstvu ne navodi kada ne nastaje " +
+      "obaveza obračuna PDV-a (potvrdila podrška SEF-a 04.11.2026). Javlja se samo uz uključenu validaciju.",
     action:
-      "Za obveznike van PDV-a ovo je poznato otvoreno pitanje (Q9): demo okruženje vraća ovu grešku iako produkcija " +
-      "prihvata istu strukturu. Ne menjajte PDV pravilo na svoju ruku; javite održavaocu.",
-    source: "SEF demo 02.11.2026; sef-mcp Q9",
+      "Ne menjajte PDV pravilo i ne dodajte šifru. Ako se korisnik izričito složi, isti nacrt se može ponovo poslati " +
+      "bez SEF validacije (executeValidation=false); u suprotnom fakturu izdajte ručno na portalu. Otvoreno pitanje Q9.",
+    source: "SEF demo 02.11. i 04.11.2026; podrška SEF-a 04.11.2026; sef-mcp Q9",
   },
   VATCategoryNotAllowed: {
     meaning: "Kategorija PDV-a na stavci nije podržana na SEF-u.",

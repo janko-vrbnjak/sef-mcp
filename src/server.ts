@@ -152,11 +152,22 @@ export async function startServer(tools: SefTools): Promise<void> {
       title: "Send an approved draft to SEF",
       description:
         "Uploads a previously drafted invoice to SEF. Requires the draftId and the approvalCode the user approved. " +
-        "Only call after the user explicitly approved this exact draft. In prod it also requires SEF_MCP_ALLOW_PROD_WRITE=true.",
-      inputSchema: { draftId: z.string(), approvalCode: z.string().length(8) },
+        "Only call after the user explicitly approved this exact draft. In prod it also requires SEF_MCP_ALLOW_PROD_WRITE=true. " +
+        "SEF validation is on by default. executeValidation=false is accepted only after SEF validation rejected this " +
+        "same draft (UBLDocumentNotValid) and the user, told the exact error, explicitly agreed to resend without SEF validation.",
+      inputSchema: {
+        draftId: z.string(),
+        approvalCode: z.string().length(8),
+        executeValidation: z
+          .boolean()
+          .optional()
+          .describe("Default true. false only with the user's explicit consent after a validation rejection of this draft (see Q9)."),
+      },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
     },
-    wrap((a: { draftId: string; approvalCode: string }) => tools.sendInvoice(a.draftId, a.approvalCode))
+    wrap((a: { draftId: string; approvalCode: string; executeValidation?: boolean }) =>
+      tools.sendInvoice(a.draftId, a.approvalCode, { executeValidation: a.executeValidation })
+    )
   );
 
   server.registerTool(

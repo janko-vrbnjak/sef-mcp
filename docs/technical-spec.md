@@ -84,7 +84,7 @@ Schema changes bump `version` and ship a migration note in CHANGELOG.
 | `sef_list_unit_measures` | — | SEF list of unit codes | readOnly, openWorld |
 | `sef_draft_invoice` | see `DraftInvoiceInput` | draftId, approvalCode, totals, warnings, xmlFile | local write only |
 | `sef_get_draft` | draftId, includeXml? | draft (+xml) | readOnly |
-| `sef_send_invoice` | draftId, approvalCode(8) | SEF ids | **destructive**, idempotent |
+| `sef_send_invoice` | draftId, approvalCode(8), executeValidation? (default true) | SEF ids | **destructive**, idempotent. `false` only after SEF validation (`UBLDocumentNotValid`) rejected the same draft — checked against the audit log — and with a separate deterministic requestId (Q9) |
 | `sef_get_invoice` | invoiceId | SEF invoice | readOnly, openWorld |
 | `sef_list_invoice_ids` | status, dateFrom, dateTo | ids | readOnly, openWorld |
 | `sef_cancel_invoice` | invoiceId, comment | SEF response | **destructive** (Draft/New/Sending error only) |
@@ -157,7 +157,7 @@ Out of scope: a compromised local machine or MCP client.
 - `node:test`, no test framework dependency. `npm test` builds then runs `dist/test/**/*.test.js`.
 - Unit: money, UBL structure/order/escaping, safety, profile validation, draft tamper detection.
 - Tool flow with a fake `fetch`: no network before approval, approvalCode check, prod gate, audit has no key.
-- **Golden fixtures** (`test/fixtures/`): anonymised XML of invoices SEF accepted in production. `test/golden.test.ts` compares the builder's element tree (order included) and key values against them. Current: non-VAT services invoice (SS / PDV-RS-33, MON + HUR lines, 2 PDF attachments). Fixture-only optional elements are listed explicitly in the test.
+- **Golden fixtures** (`test/fixtures/`): anonymised UBL that SEF itself produced in production (current fixture: invoice created in the SEF web portal and exported; not an API upload, so it says nothing about `executeValidation`). `test/golden.test.ts` compares the builder's element tree (order included) and key values against them. Current: non-VAT services invoice (SS / PDV-RS-33, MON + HUR lines, 2 PDF attachments). Fixture-only optional elements are listed explicitly in the test.
 - To add a fixture: download the XML from SEF, keep only `<Invoice>…</Invoice>` (drop the `env:DocumentEnvelope`), replace every identifying value and amount, replace attachment base64 with `JVBERi0xLjQK`, then add a matching test case.
 - **Next:** opt-in demo e2e test (`SEF_E2E=1`) against `demoefaktura.mfin.gov.rs`.
 
@@ -174,7 +174,7 @@ Rules from SEF release notes that affect outgoing invoices, and where sef-mcp en
 | SEF | Rule | SEF error code | sef-mcp |
 |---|---|---|---|
 | 3.14 | Delivery date mandatory | `InvoiceDeliveryDateMissing` | always emitted; default + warning |
-| 3.14 | `InvoicePeriod/DescriptionCode` only for S lines | `InvoicePeriodDescriptionCodeNotDefined` / `…NotNeeded` | emitted only when a line is `S`. **Open (Q9):** demo returned `RS-R-005` (BT-8 required except on reduction documents) for an `SS` invoice on 02.11.2026; production accepted the same structure in October 2026 |
+| 3.14 | `InvoicePeriod/DescriptionCode` only for S lines | `InvoicePeriodDescriptionCodeNotDefined` / `…NotNeeded` | emitted only when a line is `S` — confirmed by SEF support 04.11.2026. **Open (Q9):** with `executeValidation=true` demo rejects an `SS` invoice without BT-8 (`RS-R-005`); with `false` it is accepted (04.11.2026). `sef_send_invoice` can resend without validation only after such a rejection and with user consent |
 | 3.15.0 | Tax category must be supported | `VATCategoryNotAllowed` | `TAX_CATEGORIES` check (profile + line) |
 | 3.15.0 | JBKJS must match a registered company | `CompanyWithJBKJSNotFound` | format check only (5 digits) |
 | 3.15.0 | `sales-invoice/ids`: New/Draft/Mistake filter by creation date, others by sending date | — | tool description |

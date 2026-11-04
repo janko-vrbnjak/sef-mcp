@@ -10,7 +10,7 @@ import { findCustomer, TaxRuleSchema, type Profile } from "./profile.js";
 import { resolveInside } from "./safety.js";
 import { SefClient, type SendToCir } from "./sef/client.js";
 import { ProfileStore, type CompanyArgs, type CustomerArgs } from "./setup.js";
-import { Store } from "./store.js";
+import { requestIdFromHash, sha256, Store } from "./store.js";
 import { buildInvoiceXml, type UblAttachment, type UblLine } from "./ubl/build.js";
 
 const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "YYYY-MM-DD");
@@ -283,18 +283,33 @@ export class SefTools {
     return includeXml ? { ...draft, xml } : draft;
   }
 
-  async sendInvoice(draftId: string, approvalCode: string) {
+  /**
+   * Uploads an approved draft. SEF validation (executeValidation=true) is the default. Sending without it is allowed
+   * only after SEF validation rejected this exact draft (UBLDocumentNotValid) — the user must agree to that
+   * separately (open question Q9: SEF rule RS-R-005 rejects valid non-VAT invoices only when validation is on).
+   */
+  async sendInvoice(draftId: string, approvalCode: string, opts: { executeValidation?: boolean } = {}) {
     assertWriteAllowed(this.cfg, "send_invoice");
     const { draft, xml } = this.store.loadDraft(draftId);
     if (approvalCode.trim().toLowerCase() !== draft.approvalCode) {
       throw new Error("approvalCode does not match this draft. Re-read the draft and ask the user to approve it.");
     }
+    const executeValidation = opts.executeValidation ?? true;
+    if (!executeValidation && !this.store.validationRejected(this.cfg.env, draftId)) {
+      throw new Error(
+        "executeValidation=false is allowed only after SEF validation rejected this exact draft (UBLDocumentNotValid). " +
+          "Send it with validation first; if SEF rejects it, explain the error and ask the user whether to resend without SEF validation."
+      );
+    }
+    // A distinct, still deterministic requestId, so SEF does not replay the earlier validated attempt.
+    const requestId = executeValidation ? draft.requestId : requestIdFromHash(sha256(`${draft.sha256}:executeValidation=false`));
+    const base = { action: "send", env: this.cfg.env, draftId, invoiceNumber: draft.invoiceNumber, requestId, executeValidation };
     try {
-      const result = await this.sef().uploadUbl(xml, draft.requestId, draft.sendToCir, true);
-      this.store.audit({ action: "send", ok: true, env: this.cfg.env, draftId, invoiceNumber: draft.invoiceNumber, requestId: draft.requestId, result });
-      return { sent: true, environment: this.cfg.env, invoiceNumber: draft.invoiceNumber, requestId: draft.requestId, sef: result };
+      const result = await this.sef().uploadUbl(xml, requestId, draft.sendToCir, executeValidation);
+      this.store.audit({ ...base, ok: true, result });
+      return { sent: true, environment: this.cfg.env, invoiceNumber: draft.invoiceNumber, requestId, executeValidation, sef: result };
     } catch (err) {
-      this.store.audit({ action: "send", ok: false, env: this.cfg.env, draftId, invoiceNumber: draft.invoiceNumber, requestId: draft.requestId, error: (err as Error).message, body: (err as { body?: string }).body });
+      this.store.audit({ ...base, ok: false, error: (err as Error).message, body: (err as { body?: string }).body });
       throw err;
     }
   }

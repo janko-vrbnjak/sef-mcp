@@ -6,6 +6,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/), versions: [SemVer](http
 
 ### Added
 
+- `sef_send_invoice`: optional `executeValidation` (default true). `false` is accepted only after SEF validation rejected the same draft (`UBLDocumentNotValid`, from the audit log) and uses its own deterministic requestId; audit entries record the flag. Workaround for Q9 (`RS-R-005` on valid non-VAT invoices when validation is on).
 - Non-technical onboarding (ADR 0003): setup mode when no profile exists; `sef_setup_company` and `sef_add_customer` with preview → confirm, atomic write and `.bak` backup (`src/setup.ts`, `test/setup.test.ts`).
 - Serbian explanations for known SEF errors and HTTP 401/403 (`src/sef/errors.ts`).
 - Per-environment keys `SEF_API_KEY_DEMO` / `SEF_API_KEY_PROD`; `SEF_MCP_PROFILE` now defaults to `<SEF_MCP_DATA_DIR>/profile.json`; attachments folder is created if missing.
@@ -14,7 +15,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/), versions: [SemVer](http
 
 - SEF 4.2.0 baseline: pre-upload checks for rules from releases 3.15.0–4.0.0 (`src/ubl/rules.ts`, `test/rules.test.ts`): supported tax categories (`VATCategoryNotAllowed`), rate only for `S` (`UBLTaxCategoryPercentNotAllowed`), withdrawn exemption code PDV-RS-36b-6, positive quantity and price, mandatory unit of measure. Same tax checks run on the profile.
 - Compliance matrix in technical-spec §11.
-- Golden test against an anonymised invoice SEF accepted in production (`test/fixtures/accepted-non-vat-services.xml`).
+- Golden test against anonymised UBL that SEF produced for a portal-created production invoice (`test/fixtures/accepted-non-vat-services.xml`).
 - `sef_list_unit_measures` tool.
 - Profile: `invoiceDefaults.notes`, `customers[].vatRegistered` (default true), `customers[].defaults.{notes, unitCode, orderNumber}`; unit codes validated.
 - `SEF_MCP_MAX_ATTACHMENTS` (default 2).
