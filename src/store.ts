@@ -84,6 +84,22 @@ export class Store {
     appendFileSync(this.auditFile, JSON.stringify({ ts: new Date().toISOString(), ...entry }) + "\n", { mode: 0o600 });
   }
 
+  /** The successful send of this draft in this environment, if the audit log has one (latest wins). */
+  successfulSend(env: string, draftId: string): { ts: string; requestId?: string; result?: unknown } | undefined {
+    if (!existsSync(this.auditFile)) return undefined;
+    let found: { ts: string; requestId?: string; result?: unknown } | undefined;
+    for (const line of readFileSync(this.auditFile, "utf8").split("\n")) {
+      if (!line) continue;
+      try {
+        const r = JSON.parse(line) as { action?: string; ok?: boolean; env?: string; draftId?: string; ts: string; requestId?: string; result?: unknown };
+        if (r.action === "send" && r.ok && r.env === env && r.draftId === draftId) found = { ts: r.ts, requestId: r.requestId, result: r.result };
+      } catch {
+        /* ignore corrupt line */
+      }
+    }
+    return found;
+  }
+
   /** Invoice numbers already sent successfully in this environment (from the audit log). */
   sentNumbers(env: string): Set<string> {
     const out = new Set<string>();

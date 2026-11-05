@@ -287,7 +287,15 @@ export class SefTools {
    * Uploads an approved draft. By default without SEF validation (executeValidation=false), the same as the SEF
    * portal: SEF support confirmed on 05.11.2026 that the "Izvrši validaciju" option is not in operation yet, and with
    * it SEF rejects valid non-VAT invoices (RS-R-005, Q9). sef-mcp's own pre-upload checks (src/ubl/rules.ts) still run.
-   * executeValidation=true only on explicit request; it gets its own deterministic requestId.
+   * executeValidation=true only on explicit request.
+   *
+   * requestId mapping is part of the on-disk contract and must stay identical across versions (drafts and the
+   * audit log survive upgrades; SEF replays the stored answer for a known requestId):
+   *   with SEF validation    → draft.requestId
+   *   without SEF validation → requestIdFromHash(sha256(`${draft.sha256}:executeValidation=false`))
+   * Changing it would let a retry after an upgrade create a second invoice, or replay an old rejection.
+   *
+   * A draft the audit log already records as sent successfully is never uploaded again.
    */
   async sendInvoice(draftId: string, approvalCode: string, opts: { executeValidation?: boolean } = {}) {
     assertWriteAllowed(this.cfg, "send_invoice");
@@ -295,8 +303,21 @@ export class SefTools {
     if (approvalCode.trim().toLowerCase() !== draft.approvalCode) {
       throw new Error("approvalCode does not match this draft. Re-read the draft and ask the user to approve it.");
     }
+    const previous = this.store.successfulSend(this.cfg.env, draftId);
+    if (previous) {
+      return {
+        sent: true,
+        alreadySent: true,
+        environment: this.cfg.env,
+        invoiceNumber: draft.invoiceNumber,
+        requestId: previous.requestId,
+        sentAt: previous.ts,
+        warnings: ["This draft was already sent successfully; it was not uploaded again. Check its status instead."],
+        sef: previous.result,
+      };
+    }
     const executeValidation = opts.executeValidation ?? false;
-    const requestId = executeValidation ? requestIdFromHash(sha256(`${draft.sha256}:executeValidation=true`)) : draft.requestId;
+    const requestId = executeValidation ? draft.requestId : requestIdFromHash(sha256(`${draft.sha256}:executeValidation=false`));
     const warnings = executeValidation
       ? ["SEF validation was requested, but SEF support says the option is not in operation yet (05.11.2026); valid non-VAT invoices may be rejected with RS-R-005."]
       : [];

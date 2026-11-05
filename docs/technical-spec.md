@@ -84,7 +84,7 @@ Schema changes bump `version` and ship a migration note in CHANGELOG.
 | `sef_list_unit_measures` | — | SEF list of unit codes | readOnly, openWorld |
 | `sef_draft_invoice` | see `DraftInvoiceInput` | draftId, approvalCode, totals, warnings, xmlFile | local write only |
 | `sef_get_draft` | draftId, includeXml? | draft (+xml) | readOnly |
-| `sef_send_invoice` | draftId, approvalCode(8), executeValidation? (default **false**) | SEF ids | **destructive**, idempotent. Default matches the SEF portal (SEF support 05.11.2026: validation option not in operation yet). `true` only on explicit request; own deterministic requestId and a warning |
+| `sef_send_invoice` | draftId, approvalCode(8), executeValidation? (default **false**) | SEF ids | **destructive**, idempotent. Default matches the SEF portal (SEF support 05.11.2026: validation option not in operation yet). `true` only on explicit request, with a warning. A draft already sent successfully (audit log) is not uploaded again: `alreadySent: true` + the earlier SEF response |
 | `sef_get_invoice` | invoiceId | SEF invoice | readOnly, openWorld |
 | `sef_list_invoice_ids` | status, dateFrom, dateTo | ids | readOnly, openWorld |
 | `sef_cancel_invoice` | invoiceId, comment | SEF response | **destructive** (Draft/New/Sending error only) |
@@ -109,7 +109,14 @@ Source: API spec 31.07.2026 (see §0).
 
 Auth header: `ApiKey`. `sendToCir`: `Yes` / `No` (only documented values). Redirects are refused. The API spec names only the production host; the demo host `demoefaktura.mfin.gov.rs` is the publicly used one and must be confirmed (Q6). Base URLs are constants; there is intentionally no override variable.
 
-**Idempotency:** `requestId` = UUID-shaped string derived from the SHA-256 of the draft XML. The spec does not define a `requestId` format (examples are numeric); a UUID-shaped string is used. SEF returns the original response for a repeated `requestId`, so a retry after a timeout cannot create a second invoice. Consequence: if SEF rejected a draft, you must create a new draft (changed XML → new requestId).
+**Idempotency:** `requestId` is a UUID-shaped string derived from the SHA-256 of the draft XML (the spec defines no format; its examples are numeric). SEF returns the original response for a repeated `requestId`, so a retry after a timeout cannot create a second invoice.
+
+| Send | requestId |
+|---|---|
+| with SEF validation (`executeValidation=true`) | `draft.requestId` = `requestIdFromHash(draft.sha256)` |
+| without SEF validation (default since 0.2.1) | `requestIdFromHash(sha256(draft.sha256 + ":executeValidation=false"))` |
+
+This mapping is an **on-disk contract**: drafts and the audit log survive upgrades, so it must never change between versions (covered by a test). Changing it would let a retry after an upgrade create a second invoice, or replay an old rejection. On top of that, `sendInvoice` refuses to upload a draft the audit log already records as sent successfully in the same environment. A rejected draft keeps its requestId per mode: resending it in the same mode replays the rejection, so fix the cause and create a new draft.
 
 ## 6. UBL mapping (SRB-CIUS)
 
@@ -143,7 +150,7 @@ Element order follows the UBL 2.1 XSD sequence and is covered by a test.
 | Key committed to git | Profile has no key field; `.env*` ignored except `.env.example`; unresolved `op://` refs rejected so plain keys aren't needed |
 | Prompt injection makes the model send/cancel | Destructive tool annotations → client asks the human; send needs draftId + approvalCode; prod needs second switch; read-only mode |
 | Approved version ≠ sent version | approvalCode = hash prefix; XML hash re-verified on load |
-| Duplicate invoice on retry | Deterministic `requestId`; duplicate-number warning from audit log |
+| Duplicate invoice on retry | Deterministic, version-stable `requestId`; no second upload of a draft already sent (audit log); duplicate-number warning when drafting |
 | Arbitrary file read via attachments | Single allowed dir, `realpath` confinement (symlinks), PDF magic bytes, size limit |
 | Traffic to a malicious host | Hard-coded base URLs, origin check, `redirect: "error"` |
 | Supply chain | Two runtime deps (`@modelcontextprotocol/sdk`, `zod`), lockfile, Dependabot, CI, no install scripts |

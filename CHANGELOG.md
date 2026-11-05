@@ -4,9 +4,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/), versions: [SemVer](http
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-11-05
+
 ### Changed
 
-- `sef_send_invoice` now sends **without** SEF validation by default (`executeValidation=false`), like the SEF portal: SEF support confirmed on 05.11.2026 that the "Izvrši validaciju" option is not in operation yet. `true` only on explicit request, with its own requestId and a warning. Removed the "only after a validation rejection" guard. Closes Q5 and Q9.
+- `sef_send_invoice` now sends **without** SEF validation by default (`executeValidation=false`), like the SEF portal: SEF support confirmed on 05.11.2026 that the "Izvrši validaciju" option is not in operation yet. `true` only on explicit request, with a warning. Removed the "only after a validation rejection" guard. Closes Q5 and Q9.
+
+### Fixed
+
+- `requestId` per send mode is the same as in 0.2.0 (with validation: `draft.requestId`; without: the `:executeValidation=false` hash) and is now documented as a version-stable contract. Swapping them would have let a retry after upgrading create a second invoice, or replay an earlier rejection.
+- A draft already sent successfully (per the audit log) is not uploaded again; the result returns `alreadySent: true` with the earlier SEF response. The skill explains this instead of resending.
 
 ## [0.2.0] — 2026-11-05
 

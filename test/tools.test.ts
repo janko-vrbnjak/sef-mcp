@@ -7,6 +7,9 @@ import { loadRuntimeConfig } from "../src/env.js";
 import { parseProfile } from "../src/profile.js";
 import { SefClient } from "../src/sef/client.js";
 import { SefTools } from "../src/tools.js";
+import { requestIdFromHash, sha256 } from "../src/store.js";
+
+const noValidationRequestId = (draftSha: string) => requestIdFromHash(sha256(`${draftSha}:executeValidation=false`));
 
 const profile = parseProfile(
   JSON.parse(readFileSync(new URL("../../examples/profile.example.json", import.meta.url), "utf8"))
@@ -104,7 +107,7 @@ test("send requires the matching approvalCode", async () => {
   assert.equal(calls.length, 1);
   const call = calls[0]!;
   assert.ok(call.url.startsWith("https://demoefaktura.mfin.gov.rs/api/publicApi/sales-invoice/ubl?"));
-  assert.ok(call.url.includes(`requestId=${tools.getDraft(d.draftId).requestId}`));
+  assert.ok(call.url.includes(`requestId=${noValidationRequestId(tools.getDraft(d.draftId).sha256)}`));
   assert.ok(call.url.includes("executeValidation=false"));
   assert.equal((call.init.headers as Record<string, string>).ApiKey, "test-key-123456");
 });
@@ -145,7 +148,7 @@ test("Q9: send goes without SEF validation by default, like the portal", async (
   assert.equal(r.executeValidation, false);
   assert.deepEqual(r.warnings, []);
   assert.ok(calls[0]!.url.includes("executeValidation=false"));
-  assert.equal(new URL(calls[0]!.url).searchParams.get("requestId"), tools.getDraft(d.draftId).requestId);
+  assert.equal(new URL(calls[0]!.url).searchParams.get("requestId"), noValidationRequestId(tools.getDraft(d.draftId).sha256));
   const sends = readFileSync(join(dataDir, "audit.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l)).filter((e) => e.action === "send");
   assert.deepEqual(sends.map((e) => [e.ok, e.executeValidation]), [[true, false]]);
 });
@@ -156,6 +159,51 @@ test("Q9: SEF validation on explicit request — own requestId and a warning", a
   const r = await tools.sendInvoice(d.draftId, d.approvalCode, { executeValidation: true });
   assert.equal(r.executeValidation, true);
   assert.ok(calls[0]!.url.includes("executeValidation=true"));
-  assert.notEqual(r.requestId, tools.getDraft(d.draftId).requestId);
+  assert.equal(r.requestId, tools.getDraft(d.draftId).requestId);
   assert.ok(r.warnings.some((w) => w.includes("not in operation")));
+});
+
+test("requestId mapping is stable across versions (same ids as 0.2.0)", async () => {
+  // 0.2.0 sent with validation under draft.requestId and without it under the ':executeValidation=false' hash.
+  // Drafts and the audit log survive upgrades, so these ids must never change.
+  const a = setup();
+  const d = a.tools.draftInvoice(args);
+  const plain = await a.tools.sendInvoice(d.draftId, d.approvalCode);
+  assert.equal(plain.requestId, requestIdFromHash(sha256(`${a.tools.getDraft(d.draftId).sha256}:executeValidation=false`)));
+  const b = setup();
+  const d2 = b.tools.draftInvoice(args);
+  const validated = await b.tools.sendInvoice(d2.draftId, d2.approvalCode, { executeValidation: true });
+  assert.equal(validated.requestId, b.tools.getDraft(d2.draftId).requestId);
+  assert.notEqual(plain.requestId, validated.requestId);
+});
+
+test("a draft already sent successfully is not uploaded again", async () => {
+  const { tools, calls } = setup();
+  const d = tools.draftInvoice(args);
+  const first = await tools.sendInvoice(d.draftId, d.approvalCode);
+  const again = await tools.sendInvoice(d.draftId, d.approvalCode);
+  const validatedRetry = await tools.sendInvoice(d.draftId, d.approvalCode, { executeValidation: true });
+  assert.equal(calls.length, 1);
+  assert.equal(again.alreadySent, true);
+  assert.equal(validatedRetry.alreadySent, true);
+  assert.equal(again.requestId, first.requestId);
+  assert.deepEqual(again.sef, first.sef);
+});
+
+test("a rejected draft can be sent again (rejections do not count as sent)", async () => {
+  const dataDir = mkdtempSync(join(tmpdir(), "sef-tools-"));
+  const cfg = loadRuntimeConfig({ SEF_MCP_DATA_DIR: dataDir, SEF_API_KEY: "test-key-123456" });
+  let n = 0;
+  const fetchImpl = (async () => {
+    n++;
+    return n === 1
+      ? new Response('{"ErrorCode":"RS-R-005"}', { status: 400 })
+      : new Response(JSON.stringify({ InvoiceId: 1, SalesInvoiceId: 42 }), { status: 200 });
+  }) as typeof fetch;
+  const tools = new SefTools(cfg, profile, new SefClient({ env: "demo", apiKey: "test-key-123456", fetchImpl }), () => new Date("2026-11-02T10:00:00Z"));
+  const d = tools.draftInvoice(args);
+  await assert.rejects(tools.sendInvoice(d.draftId, d.approvalCode, { executeValidation: true }), /HTTP 400/);
+  const r = await tools.sendInvoice(d.draftId, d.approvalCode);
+  assert.equal(r.alreadySent, undefined);
+  assert.equal(n, 2);
 });

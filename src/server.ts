@@ -154,7 +154,8 @@ export async function startServer(tools: SefTools): Promise<void> {
         "Uploads a previously drafted invoice to SEF. Requires the draftId and the approvalCode the user approved. " +
         "Only call after the user explicitly approved this exact draft. In prod it also requires SEF_MCP_ALLOW_PROD_WRITE=true. " +
         "Sends without SEF's own validation by default, like the SEF portal (SEF support: the option is not in operation yet). " +
-        "Pass executeValidation=true only if the user explicitly asks for it.",
+        "Pass executeValidation=true only if the user explicitly asks for it. A draft that was already sent successfully " +
+        "is not uploaded again: the result has alreadySent=true and the earlier SEF response.",
       inputSchema: {
         draftId: z.string(),
         approvalCode: z.string().length(8),
