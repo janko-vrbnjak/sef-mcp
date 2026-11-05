@@ -195,12 +195,22 @@ When SEF publishes a new release: read its notes, add rows here, add a test name
 
 | Artifact | Build | For |
 |---|---|---|
-| `dist/sef-mcp-<v>.mcpb` | `npm run pack:mcpb` (stages runtime files in `build/mcpb`, `npm ci --omit=dev --ignore-scripts`, `mcpb validate` + `mcpb pack`) | Claude Desktop / Cowork: one-click install, bundled Node.js, keys in the OS keychain |
-| `dist/sef-fakture-<v>.plugin` | `npm run pack:plugin` | Skills `sef-podesavanje` and `sef-fakturisanje` (Cowork, Claude Code) |
+| `dist/sef-mcp-<v>.mcpb` + `dist/sef-mcp.mcpb` | `npm run pack:mcpb` (stages runtime files in `build/mcpb`, `npm ci --omit=dev --ignore-scripts`, `mcpb validate` + `mcpb pack`) | Claude Desktop / Cowork: one-click install, bundled Node.js, keys in the OS keychain |
+| `dist/sef-fakture-<v>.plugin` + `dist/sef-fakture.plugin` | `npm run pack:plugin` | Skills `sef-podesavanje` and `sef-fakturisanje` (Cowork, Claude Code) |
 
 Extension settings → environment variables (`packaging/mcpb/manifest.json`): `sef_env` → `SEF_ENV`, `api_key_demo` / `api_key_prod` (sensitive) → `SEF_API_KEY_DEMO` / `SEF_API_KEY_PROD`, `allow_prod_write` → `SEF_MCP_ALLOW_PROD_WRITE`, `data_dir` → `SEF_MCP_DATA_DIR`, `attachments_dir` → `SEF_MCP_ATTACHMENTS_DIR` (created if missing). The manifest version is overwritten from `package.json` at pack time.
 
-Release checklist: `npm test` green → bump `package.json` and `plugins/sef-fakture/.claude-plugin/plugin.json` → both pack scripts → install the `.mcpb` on a clean machine without Node.js and run the onboarding skill on demo → GitHub Release with both files and the CHANGELOG section.
+The unversioned copies are what the user guide links to: `https://github.com/jvrbnjak89/sef-mcp/releases/latest/download/sef-mcp.mcpb` and `…/sef-fakture.plugin`. GitHub's `latest` skips drafts and pre-releases, so a release meant for users must be a normal release.
+
+**Release (automated, `.github/workflows/release.yml`):** pushing a tag `vX.Y.Z` runs tests, checks that the tag matches `package.json` and `plugin.json`, builds both artifacts and publishes a GitHub Release with the four files. Notes come from `docs/releases/vX.Y.Z.md` (user-facing, Serbian) plus the matching CHANGELOG section.
+
+Release checklist:
+1. `npm test` green; move CHANGELOG *Unreleased* into `## [X.Y.Z] — date`.
+2. Bump `package.json`, `package-lock.json` and `plugins/sef-fakture/.claude-plugin/plugin.json`.
+3. Write `docs/releases/vX.Y.Z.md`.
+4. Locally: `npm run pack:mcpb && npm run pack:plugin`, install the `.mcpb` on a machine without Node.js, run the onboarding skill on demo.
+5. Commit, then `git tag vX.Y.Z && git push origin vX.Y.Z`.
+6. Open the user guide links and check that both files download.
 
 ## 10. Conventions
 

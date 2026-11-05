@@ -9,7 +9,7 @@ Dva skilla koja Claude-u govore **kada i kako** da koristi alate iz ekstenzije *
 
 ## Preduslov
 
-Plugin ne sadrži sam server. Prvo instalirajte ekstenziju **SEF e-fakture** (`sef-mcp-<verzija>.mcpb`) — dvoklik na fajl u Claude aplikaciji. Uputstvo: [docs/za-korisnike.md](../../docs/za-korisnike.md).
+Plugin ne sadrži sam server. Prvo instalirajte ekstenziju **SEF e-fakture** — preuzmite [sef-mcp.mcpb](https://github.com/jvrbnjak89/sef-mcp/releases/latest/download/sef-mcp.mcpb) i dva puta kliknite na fajl. Uputstvo: [docs/za-korisnike.md](../../docs/za-korisnike.md).
 
 ## Pravila koja skillovi uvek poštuju
 

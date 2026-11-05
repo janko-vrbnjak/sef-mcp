@@ -1,0 +1,50 @@
+name: Release
+
+# Push a tag vX.Y.Z → test, build the Claude extension (.mcpb) and skills plugin (.plugin),
+# publish a GitHub Release. The user guide links to releases/latest/download/<stable name>.
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Tag must match package and plugin versions
+        run: |
+          V="${GITHUB_REF_NAME#v}"
+          test "$(node -p "require('./package.json').version")" = "$V" || { echo "package.json version != $V"; exit 1; }
+          test "$(node -p "require('./plugins/sef-fakture/.claude-plugin/plugin.json').version")" = "$V" || { echo "plugin.json version != $V"; exit 1; }
+          test -f "docs/releases/${GITHUB_REF_NAME}.md" || { echo "missing docs/releases/${GITHUB_REF_NAME}.md"; exit 1; }
+
+      - run: npm test
+      - run: npm run pack:mcpb
+      - run: npm run pack:plugin
+
+      - name: Checksums and release notes
+        run: |
+          V="${GITHUB_REF_NAME#v}"
+          cd dist && sha256sum sef-mcp.mcpb sef-fakture.plugin "sef-mcp-$V.mcpb" "sef-fakture-$V.plugin" > SHA256SUMS.txt && cd ..
+          {
+            cat "docs/releases/${GITHUB_REF_NAME}.md"
+            printf '\n---\n\n## Tehničke izmene (CHANGELOG)\n\n'
+            awk -v h="## [$V]" 'index($0, h) == 1 { f = 1; next } f && /^## \[/ { exit } f' CHANGELOG.md
+          } > notes.md
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V="${GITHUB_REF_NAME#v}"
+          gh release create "$GITHUB_REF_NAME" --title "sef-mcp $V" --notes-file notes.md --verify-tag \
+            dist/sef-mcp.mcpb dist/sef-fakture.plugin "dist/sef-mcp-$V.mcpb" "dist/sef-fakture-$V.plugin" dist/SHA256SUMS.txt

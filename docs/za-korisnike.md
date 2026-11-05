@@ -18,7 +18,9 @@ Sve radi na vašem računaru. Vaš SEF ključ se čuva u sigurnom skladištu sis
 
 ### 1. Instalirajte ekstenziju „SEF e-fakture“
 
-Sa [stranice izdanja projekta](https://github.com/jvrbnjak89/sef-mcp/releases) preuzmite fajl `sef-mcp-….mcpb`, dva puta kliknite na njega i u Claude aplikaciji izaberite **Install**.
+Preuzmite **[sef-mcp.mcpb](https://github.com/jvrbnjak89/sef-mcp/releases/latest/download/sef-mcp.mcpb)** (uvek najnovija verzija), dva puta kliknite na fajl i u Claude aplikaciji izaberite **Install**.
+
+Sve verzije i opis izmena: [stranica izdanja](https://github.com/jvrbnjak89/sef-mcp/releases).
 
 ### 2. Napravite probni (demo) ključ
 
@@ -31,7 +33,7 @@ Ključ nikad ne lepite u razgovor sa Claude-om — samo u ovo polje.
 
 ### 3. Dodajte skillove „sef-fakture“
 
-Sa iste stranice preuzmite `sef-fakture-….plugin` i otvorite ga u Claude aplikaciji. Skillovi Claude-u govore kako da vas vodi kroz podešavanje i fakturisanje.
+Preuzmite **[sef-fakture.plugin](https://github.com/jvrbnjak89/sef-mcp/releases/latest/download/sef-fakture.plugin)** i otvorite ga u Claude aplikaciji. Skillovi Claude-u govore kako da vas vodi kroz podešavanje i fakturisanje.
 
 ### 4. Recite Claude-u: „Podesi moju firmu za SEF“
 

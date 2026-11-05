@@ -5,7 +5,7 @@
  * Uses the system `zip` (macOS/Linux) or PowerShell Compress-Archive (Windows).
  */
 import { execFileSync } from "node:child_process";
-import { mkdirSync, readFileSync, rmSync } from "node:fs";
+import { copyFileSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -22,4 +22,7 @@ if (process.platform === "win32") {
 } else {
   execFileSync("zip", ["-r", "-X", out, ".", "-x", "*.DS_Store"], { cwd: src, stdio: "inherit" });
 }
-process.stdout.write(`\nGotovo: ${out}\n`);
+// Stable name for https://github.com/<owner>/sef-mcp/releases/latest/download/sef-fakture.plugin
+const stable = join(root, "dist", "sef-fakture.plugin");
+copyFileSync(out, stable);
+process.stdout.write(`\nGotovo: ${out}\n       ${stable}\n`);

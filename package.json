@@ -1,6 +1,6 @@
 {
   "name": "sef-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Local-first MCP server for issuing e-invoices on the Serbian SEF (Sistem elektronskih faktura) — safe by default, configurable per company.",
   "license": "MIT",
   "type": "module",

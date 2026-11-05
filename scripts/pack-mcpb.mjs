@@ -11,7 +11,7 @@
  * Needs network access to npm the first time (for @anthropic-ai/mcpb via npx).
  */
 import { execFileSync } from "node:child_process";
-import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -45,4 +45,7 @@ run(npm, ["ci", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund"], st
 const out = join(root, "dist", `sef-mcp-${pkg.version}.mcpb`);
 run(npx, ["-y", "@anthropic-ai/mcpb", "validate", join(stage, "manifest.json")]);
 run(npx, ["-y", "@anthropic-ai/mcpb", "pack", stage, out]);
-process.stdout.write(`\nGotovo: ${out}\n`);
+// Stable name for https://github.com/<owner>/sef-mcp/releases/latest/download/sef-mcp.mcpb
+const stable = join(root, "dist", "sef-mcp.mcpb");
+copyFileSync(out, stable);
+process.stdout.write(`\nGotovo: ${out}\n       ${stable}\n`);

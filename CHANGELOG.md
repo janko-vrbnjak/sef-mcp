@@ -4,6 +4,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/), versions: [SemVer](http
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-11-05
+
 ### Added
 
 - `sef_send_invoice`: optional `executeValidation` (default true). `false` is accepted only after SEF validation rejected the same draft (`UBLDocumentNotValid`, from the audit log) and uses its own deterministic requestId; audit entries record the flag. Workaround for Q9 (`RS-R-005` on valid non-VAT invoices when validation is on).
@@ -12,7 +14,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/), versions: [SemVer](http
 - Per-environment keys `SEF_API_KEY_DEMO` / `SEF_API_KEY_PROD`; `SEF_MCP_PROFILE` now defaults to `<SEF_MCP_DATA_DIR>/profile.json`; attachments folder is created if missing.
 - Claude Desktop extension manifest (`packaging/mcpb/manifest.json`, `npm run pack:mcpb`) and skills plugin `sef-fakture` with `sef-podesavanje` and `sef-fakturisanje` (`npm run pack:plugin`).
 - User guide without terminal (`docs/za-korisnike.md`), privacy note (`docs/privatnost.md`), ADR 0003 (distribution, GPT options).
-
+- Release workflow: tag `vX.Y.Z` → tests, Claude extension and skills plugin built and attached to a GitHub Release; stable download names `sef-mcp.mcpb` and `sef-fakture.plugin` for the user guide.
 - SEF 4.2.0 baseline: pre-upload checks for rules from releases 3.15.0–4.0.0 (`src/ubl/rules.ts`, `test/rules.test.ts`): supported tax categories (`VATCategoryNotAllowed`), rate only for `S` (`UBLTaxCategoryPercentNotAllowed`), withdrawn exemption code PDV-RS-36b-6, positive quantity and price, mandatory unit of measure. Same tax checks run on the profile.
 - Compliance matrix in technical-spec §11.
 - Golden test against anonymised UBL that SEF produced for a portal-created production invoice (`test/fixtures/accepted-non-vat-services.xml`).
