@@ -33,7 +33,7 @@ Ostatak ove stranice je za tehničke korisnike i developere.
 | `sef_list_unit_measures` | Zvanične jedinice mere (npr. `MON`, `HUR`, `H87`) | ne |
 | `sef_draft_invoice` | Pravi UBL fakturu lokalno, vraća iznose i `approvalCode` | samo lokalno |
 | `sef_get_draft` | Čita nacrt (opciono sa XML-om) | ne |
-| `sef_send_invoice` | Šalje **odobren** nacrt na SEF, uz SEF validaciju; bez nje samo posle odbijanja validacije i uz tvoju saglasnost | **da** |
+| `sef_send_invoice` | Šalje **odobren** nacrt na SEF (bez SEF validacije, kao portal — ta opcija na SEF-u još nije u funkciji) | **da** |
 | `sef_get_invoice` / `sef_list_invoice_ids` | Status i pregled poslatih faktura | ne |
 | `sef_cancel_invoice` | Otkazuje fakturu u statusu Nacrt / Nova / Greška pri slanju | **da** |
 | `sef_storno_invoice` | Stornira fakturu u statusu Poslata / Prihvaćena / Odbijena | **da** |
@@ -61,7 +61,7 @@ Detalji: [SECURITY.md](SECURITY.md) i [docs/technical-spec.md](docs/technical-sp
 
 ## Status
 
-**v0.1 — rana faza.** Usklađeno sa **SEF 4.2.0** (pravila iz izdanja 3.14–4.2.0, vidi tehničku specifikaciju §11), API specifikacijom od 31.07.2026 i ITU od 01.10.2026. UBL generator reprodukuje strukturu koju SEF sam pravi za fakturu unetu u portal (golden test). Pre produkcije još: test na demo okruženju; poznata je greška SEF validacije za neobveznike PDV-a (Q9, vidi funkcionalnu specifikaciju). Vidi [docs/roadmap.md](docs/roadmap.md).
+**v0.1 — rana faza.** Usklađeno sa **SEF 4.2.0** (pravila iz izdanja 3.14–4.2.0, vidi tehničku specifikaciju §11), API specifikacijom od 31.07.2026 i ITU od 01.10.2026. UBL generator reprodukuje strukturu koju SEF sam pravi za fakturu unetu u portal (golden test). Fakture se šalju bez SEF validacije, kao sa portala, jer ta opcija na SEF-u još nije u funkciji (podrška SEF-a, 05.11.2026). Vidi [docs/roadmap.md](docs/roadmap.md).
 
 ## Dokumentacija
 

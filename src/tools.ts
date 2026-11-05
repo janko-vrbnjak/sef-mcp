@@ -284,9 +284,10 @@ export class SefTools {
   }
 
   /**
-   * Uploads an approved draft. SEF validation (executeValidation=true) is the default. Sending without it is allowed
-   * only after SEF validation rejected this exact draft (UBLDocumentNotValid) — the user must agree to that
-   * separately (open question Q9: SEF rule RS-R-005 rejects valid non-VAT invoices only when validation is on).
+   * Uploads an approved draft. By default without SEF validation (executeValidation=false), the same as the SEF
+   * portal: SEF support confirmed on 05.11.2026 that the "Izvrši validaciju" option is not in operation yet, and with
+   * it SEF rejects valid non-VAT invoices (RS-R-005, Q9). sef-mcp's own pre-upload checks (src/ubl/rules.ts) still run.
+   * executeValidation=true only on explicit request; it gets its own deterministic requestId.
    */
   async sendInvoice(draftId: string, approvalCode: string, opts: { executeValidation?: boolean } = {}) {
     assertWriteAllowed(this.cfg, "send_invoice");
@@ -294,20 +295,16 @@ export class SefTools {
     if (approvalCode.trim().toLowerCase() !== draft.approvalCode) {
       throw new Error("approvalCode does not match this draft. Re-read the draft and ask the user to approve it.");
     }
-    const executeValidation = opts.executeValidation ?? true;
-    if (!executeValidation && !this.store.validationRejected(this.cfg.env, draftId)) {
-      throw new Error(
-        "executeValidation=false is allowed only after SEF validation rejected this exact draft (UBLDocumentNotValid). " +
-          "Send it with validation first; if SEF rejects it, explain the error and ask the user whether to resend without SEF validation."
-      );
-    }
-    // A distinct, still deterministic requestId, so SEF does not replay the earlier validated attempt.
-    const requestId = executeValidation ? draft.requestId : requestIdFromHash(sha256(`${draft.sha256}:executeValidation=false`));
+    const executeValidation = opts.executeValidation ?? false;
+    const requestId = executeValidation ? requestIdFromHash(sha256(`${draft.sha256}:executeValidation=true`)) : draft.requestId;
+    const warnings = executeValidation
+      ? ["SEF validation was requested, but SEF support says the option is not in operation yet (05.11.2026); valid non-VAT invoices may be rejected with RS-R-005."]
+      : [];
     const base = { action: "send", env: this.cfg.env, draftId, invoiceNumber: draft.invoiceNumber, requestId, executeValidation };
     try {
       const result = await this.sef().uploadUbl(xml, requestId, draft.sendToCir, executeValidation);
       this.store.audit({ ...base, ok: true, result });
-      return { sent: true, environment: this.cfg.env, invoiceNumber: draft.invoiceNumber, requestId, executeValidation, sef: result };
+      return { sent: true, environment: this.cfg.env, invoiceNumber: draft.invoiceNumber, requestId, executeValidation, warnings, sef: result };
     } catch (err) {
       this.store.audit({ ...base, ok: false, error: (err as Error).message, body: (err as { body?: string }).body });
       throw err;

@@ -4,9 +4,9 @@
  * Pure function: same input → byte-identical XML. No network, no clock.
  * Element order follows the UBL 2.1 XSD sequence; SEF rejects out-of-order XML.
  *
- * STATUS: v0.1 — structure follows SRB-CIUS, but must be checked against a
- * real invoice SEF has accepted (golden fixture) and against the demo
- * environment with executeValidation=true before production use.
+ * STATUS: structure follows SRB-CIUS and the UBL SEF itself produces (golden
+ * fixture); accepted on the demo environment via the API (04.11.2026). SEF's
+ * own "executeValidation" is not in operation yet (SEF support, 05.11.2026).
  */
 import type { Address, TaxRule } from "../profile.js";
 import { formatAmount, lineAmount, parseDecimal, taxAmount, AMOUNT_SCALE } from "../money.js";

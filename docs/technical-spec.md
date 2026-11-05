@@ -84,7 +84,7 @@ Schema changes bump `version` and ship a migration note in CHANGELOG.
 | `sef_list_unit_measures` | — | SEF list of unit codes | readOnly, openWorld |
 | `sef_draft_invoice` | see `DraftInvoiceInput` | draftId, approvalCode, totals, warnings, xmlFile | local write only |
 | `sef_get_draft` | draftId, includeXml? | draft (+xml) | readOnly |
-| `sef_send_invoice` | draftId, approvalCode(8), executeValidation? (default true) | SEF ids | **destructive**, idempotent. `false` only after SEF validation (`UBLDocumentNotValid`) rejected the same draft — checked against the audit log — and with a separate deterministic requestId (Q9) |
+| `sef_send_invoice` | draftId, approvalCode(8), executeValidation? (default **false**) | SEF ids | **destructive**, idempotent. Default matches the SEF portal (SEF support 05.11.2026: validation option not in operation yet). `true` only on explicit request; own deterministic requestId and a warning |
 | `sef_get_invoice` | invoiceId | SEF invoice | readOnly, openWorld |
 | `sef_list_invoice_ids` | status, dateFrom, dateTo | ids | readOnly, openWorld |
 | `sef_cancel_invoice` | invoiceId, comment | SEF response | **destructive** (Draft/New/Sending error only) |
@@ -174,7 +174,7 @@ Rules from SEF release notes that affect outgoing invoices, and where sef-mcp en
 | SEF | Rule | SEF error code | sef-mcp |
 |---|---|---|---|
 | 3.14 | Delivery date mandatory | `InvoiceDeliveryDateMissing` | always emitted; default + warning |
-| 3.14 | `InvoicePeriod/DescriptionCode` only for S lines | `InvoicePeriodDescriptionCodeNotDefined` / `…NotNeeded` | emitted only when a line is `S` — confirmed by SEF support 04.11.2026. **Open (Q9):** with `executeValidation=true` demo rejects an `SS` invoice without BT-8 (`RS-R-005`); with `false` it is accepted (04.11.2026). `sef_send_invoice` can resend without validation only after such a rejection and with user consent |
+| 3.14 | `InvoicePeriod/DescriptionCode` only for S lines | `InvoicePeriodDescriptionCodeNotDefined` / `…NotNeeded` | emitted only when a line is `S` — confirmed by SEF support 04.11.2026. `RS-R-005` appears only with `executeValidation=true`, which SEF support says is not in operation yet (05.11.2026); sef-mcp sends without it by default |
 | 3.15.0 | Tax category must be supported | `VATCategoryNotAllowed` | `TAX_CATEGORIES` check (profile + line) |
 | 3.15.0 | JBKJS must match a registered company | `CompanyWithJBKJSNotFound` | format check only (5 digits) |
 | 3.15.0 | `sales-invoice/ids`: New/Draft/Mistake filter by creation date, others by sending date | — | tool description |

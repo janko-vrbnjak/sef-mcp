@@ -105,7 +105,7 @@ test("send requires the matching approvalCode", async () => {
   const call = calls[0]!;
   assert.ok(call.url.startsWith("https://demoefaktura.mfin.gov.rs/api/publicApi/sales-invoice/ubl?"));
   assert.ok(call.url.includes(`requestId=${tools.getDraft(d.draftId).requestId}`));
-  assert.ok(call.url.includes("executeValidation=true"));
+  assert.ok(call.url.includes("executeValidation=false"));
   assert.equal((call.init.headers as Record<string, string>).ApiKey, "test-key-123456");
 });
 
@@ -138,66 +138,24 @@ test("audit log never contains the API key", async () => {
   writeFileSync(join(dataDir, "noop"), "");
 });
 
-/** Fetch that answers the first upload with a SEF validation error (RS-R-005) and later ones with success. */
-function validationThenOk(calls: Array<{ url: string; init: RequestInit }>, firstStatus = 400, firstBody?: string): typeof fetch {
-  return (async (url: string | URL, init?: RequestInit) => {
-    calls.push({ url: String(url), init: init ?? {} });
-    if (calls.length === 1) {
-      const body =
-        firstBody ??
-        JSON.stringify({ Message: '[{"ErrorCode":"RS-R-005","Message":"[RS-R-005]-..."}]', FieldName: "Invoice", ErrorCode: "UBLDocumentNotValid" });
-      return new Response(body, { status: firstStatus });
-    }
-    return new Response(JSON.stringify({ InvoiceId: 1, SalesInvoiceId: 43, PurchaseInvoiceId: 8 }), { status: 200 });
-  }) as typeof fetch;
-}
+test("Q9: send goes without SEF validation by default, like the portal", async () => {
+  const { tools, calls, dataDir } = setup();
+  const d = tools.draftInvoice(args);
+  const r = await tools.sendInvoice(d.draftId, d.approvalCode);
+  assert.equal(r.executeValidation, false);
+  assert.deepEqual(r.warnings, []);
+  assert.ok(calls[0]!.url.includes("executeValidation=false"));
+  assert.equal(new URL(calls[0]!.url).searchParams.get("requestId"), tools.getDraft(d.draftId).requestId);
+  const sends = readFileSync(join(dataDir, "audit.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l)).filter((e) => e.action === "send");
+  assert.deepEqual(sends.map((e) => [e.ok, e.executeValidation]), [[true, false]]);
+});
 
-function setupWith(fetchFor: (calls: Array<{ url: string; init: RequestInit }>) => typeof fetch) {
-  const dataDir = mkdtempSync(join(tmpdir(), "sef-tools-"));
-  const cfg = loadRuntimeConfig({ SEF_MCP_DATA_DIR: dataDir, SEF_API_KEY: "test-key-123456" });
-  const calls: Array<{ url: string; init: RequestInit }> = [];
-  const client = new SefClient({ env: cfg.env, apiKey: cfg.apiKey!, fetchImpl: fetchFor(calls) });
-  return { tools: new SefTools(cfg, profile, client, () => new Date("2026-11-02T10:00:00Z")), calls, dataDir };
-}
-
-test("Q9: sending without SEF validation is refused before a validation rejection", async () => {
+test("Q9: SEF validation on explicit request — own requestId and a warning", async () => {
   const { tools, calls } = setup();
   const d = tools.draftInvoice(args);
-  await assert.rejects(tools.sendInvoice(d.draftId, d.approvalCode, { executeValidation: false }), /only after SEF validation rejected/);
-  assert.equal(calls.length, 0);
-});
-
-test("Q9: after UBLDocumentNotValid the same draft may be resent without validation, with a new requestId", async () => {
-  const { tools, calls, dataDir } = setupWith((c) => validationThenOk(c));
-  const d = tools.draftInvoice(args);
-  await assert.rejects(tools.sendInvoice(d.draftId, d.approvalCode), /HTTP 400/);
-  const r = await tools.sendInvoice(d.draftId, d.approvalCode, { executeValidation: false });
-  assert.equal(r.sent, true);
-  assert.equal(r.executeValidation, false);
-  assert.equal(calls.length, 2);
+  const r = await tools.sendInvoice(d.draftId, d.approvalCode, { executeValidation: true });
+  assert.equal(r.executeValidation, true);
   assert.ok(calls[0]!.url.includes("executeValidation=true"));
-  assert.ok(calls[1]!.url.includes("executeValidation=false"));
-  const first = new URL(calls[0]!.url).searchParams.get("requestId");
-  const second = new URL(calls[1]!.url).searchParams.get("requestId");
-  assert.notEqual(first, second);
-  assert.equal(second, r.requestId);
-  const log = readFileSync(join(dataDir, "audit.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l));
-  const sends = log.filter((e) => e.action === "send");
-  assert.deepEqual(sends.map((e) => [e.ok, e.executeValidation]), [[false, true], [true, false]]);
-});
-
-test("Q9: a non-validation error does not unlock sending without validation", async () => {
-  const { tools, calls } = setupWith((c) => validationThenOk(c, 401, JSON.stringify({ Message: "Unauthorized" })));
-  const d = tools.draftInvoice(args);
-  await assert.rejects(tools.sendInvoice(d.draftId, d.approvalCode), /HTTP 401/);
-  await assert.rejects(tools.sendInvoice(d.draftId, d.approvalCode, { executeValidation: false }), /only after SEF validation rejected/);
-  assert.equal(calls.length, 1);
-});
-
-test("Q9: a validation rejection of another draft does not unlock this one", async () => {
-  const { tools } = setupWith((c) => validationThenOk(c));
-  const a = tools.draftInvoice(args);
-  await assert.rejects(tools.sendInvoice(a.draftId, a.approvalCode), /HTTP 400/);
-  const b = tools.draftInvoice({ ...args, number: "PR-2026-002" });
-  await assert.rejects(tools.sendInvoice(b.draftId, b.approvalCode, { executeValidation: false }), /only after SEF validation rejected/);
+  assert.notEqual(r.requestId, tools.getDraft(d.draftId).requestId);
+  assert.ok(r.warnings.some((w) => w.includes("not in operation")));
 });

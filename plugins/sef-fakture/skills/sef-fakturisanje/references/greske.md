@@ -7,7 +7,7 @@ Codes below are documented in SEF release notes or were observed in real respons
 | `InvoiceDeliveryDateMissing` | Nedostaje datum prometa | Zadati datum prometa, novi nacrt | SEF 3.14 |
 | `InvoicePeriodDescriptionCodeNotDefined` | Faktura sa PDV-om (S) nema šifru datuma poreske obaveze | Proveriti šifru (3 / 35 / 432) u profilu, novi nacrt | SEF 3.14 |
 | `InvoicePeriodDescriptionCodeNotNeeded` | Šifra datuma poreske obaveze poslata na fakturi bez obaveze obračuna PDV-a | Ne pokušavati ponovo; sef-mcp ne šalje tu šifru bez stavki `S` — javiti održavaocu | SEF 3.14 |
-| `RS-R-005` | SEF validacija traži šifru datuma poreske obaveze (BT-8), iako je podrška SEF-a potvrdila da se ona ne navodi bez obaveze obračuna PDV-a | Ne menjati PDV pravilo. Pitati korisnika: isti nacrt bez SEF validacije (`executeValidation: false`) ili ručno na portalu. Otvoreno pitanje Q9 | SEF demo 02. i 04.11.2026; podrška SEF-a 04.11.2026 |
+| `RS-R-005` | Faktura je poslata uz SEF validaciju, koja po podršci SEF-a još nije u funkciji | Ne menjati PDV pravilo i ne dodavati šifru; poslati isti nacrt bez validacije (podrazumevano) | Podrška SEF-a 04.11. i 05.11.2026 |
 | `VATCategoryNotAllowed` | Kategorija PDV-a nije podržana | Proveriti PDV pravilo sa knjigovođom | SEF 3.15.0 |
 | `CompanyWithJBKJSNotFound` | JBKJS kupca ne postoji | Ispraviti JBKJS kod kupca | SEF 3.15.0 |
 | `UBLTaxCategoryPercentNotAllowed` | Stopa > 0 za kategoriju koja nije S | Ispraviti PDV pravilo | SEF 3.16.0 |

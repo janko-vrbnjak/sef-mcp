@@ -95,7 +95,7 @@ Kriterijum prihvatanja: korisnik bez tehničkog znanja završi korake 1–4 sam 
 | BR-14 | Jedinica mere: stavka → podrazumevana za kupca → podrazumevana iz profila. Česte: `MON` (mesec), `HUR` (sat), `H87` (komad); spisak preko `sef_list_unit_measures`. |
 | BR-11 | Datum prometa je obavezan (SEF 3.14). Ako nije zadat: kraj perioda, pa datum izdavanja — uz upozorenje koje korisnik mora da potvrdi. Datum u budućnosti → upozorenje. |
 | BR-12 | Šifra datuma nastanka poreske obaveze (3/35/432) šalje se samo kada neka stavka ima kategoriju `S`; inače je SEF odbija (potvrdila podrška SEF-a 04.11.2026). |
-| BR-17 | Slanje ide uz SEF validaciju (`executeValidation=true`). Bez nje se sme poslati samo nacrt koji je SEF validacija već odbila (`UBLDocumentNotValid`), i samo uz izričitu saglasnost korisnika posle objašnjenja greške. Ponovno slanje ima poseban `requestId`. |
+| BR-17 | Slanje ide **bez SEF validacije** (`executeValidation=false`), kao sa portala: podrška SEF-a je 05.11.2026 potvrdila da opcija „Izvrši validaciju” još nije u funkciji. Sopstvene provere pre slanja (BR-15, BR-16) i dalje važe. `executeValidation=true` samo na izričit zahtev korisnika, uz upozorenje i poseban `requestId`. |
 
 ## 6. Otvorena pitanja
 
@@ -105,8 +105,8 @@ Kriterijum prihvatanja: korisnik bez tehničkog znanja završi korake 1–4 sam 
 | Q2 | ~~Prodavac van PDV-a u `PartyTaxScheme`~~ | **Zatvoreno:** u fakturi koju je SEF prihvatio (oktobar 2026) prodavac van PDV-a ima `RS{PIB}` / `VAT`, a stavke `SS` / 0 / `PDV-RS-33`. ITU (`NO-VAT` / `RS-VAT-STATUS`) to ne opisuje — praksa ima prednost, pokriveno golden testom. |
 | Q3 | ~~Broj i veličina priloga~~ | **Zatvoreno (potvrdio održavalac):** najviše 2 priloga, po 1 MB; podesivo. |
 | Q4 | ~~Jedinica mere~~ | **Zatvoreno:** `MON` i `HUR` prihvaćeni (golden fixture); pun spisak `GET /api/publicApi/get-unit-measures`. |
-| Q5 | ~~Šta radi `executeValidation`~~ | **Delimično zatvoreno (demo 04.11.2026):** uz `true` SEF primenjuje pravila poslovne validacije (npr. `RS-R-005`) i odbija fakturu sa `UBLDocumentNotValid`; uz `false` ista faktura prolazi. Da li `true` hvata sve greške pre slanja kupcu, i dalje nije provereno. |
+| Q5 | ~~Šta radi `executeValidation`~~ | **Zatvoreno:** podrška SEF-a 05.11.2026 — opcija „Izvrši validaciju” još nije u funkciji. Na demo okruženju uz `true` odbija ispravne fakture neobveznika PDV-a (`RS-R-005`), uz `false` ih prihvata (04.11.2026). Podrazumevano `false` (BR-17). |
 | Q6 | ~~Demo base URL~~ | **Zatvoreno:** `https://demoefaktura.mfin.gov.rs` (swagger: `/swagger/index.html`). |
 | Q7 | ~~Format računa u `PayeeFinancialAccount`~~ | **Zatvoreno:** 18 cifara bez crtica (golden fixture). |
 | Q8 | Da li kupac van PDV-a sme da ima `PartyTaxScheme` — sada se izostavlja kada je `vatRegistered: false` | Demo test sa takvim kupcem |
-| Q9 | BT-8 (`InvoicePeriod/DescriptionCode`) kod faktura bez stavki `S` (npr. `SS` / `PDV-RS-33`). **Pravilo potvrđeno:** podrška SEF-a (04.11.2026) — šifra se ne navodi kada ne nastaje obaveza obračuna PDV-a; dozvoljene su samo 3, 35, 432 (BR-12). **Otvoreno:** demo uz `executeValidation=true` odbija takvu fakturu (`RS-R-005`, 02. i 04.11.2026), a uz `false` je prihvata (curl, 04.11.2026); sa šifrom 35 vraća `InvoicePeriodDescriptionCodeNotNeeded`. Ponašanje na produkciji uz validaciju nije provereno (oktobarska faktura je napravljena ručno u portalu). Do odgovora: BR-17. | Odgovor podrške SEF-a na pitanje o RS-R-005 uz `executeValidation=true` (mejl 05.11.2026); prva produkciona faktura preko API-ja (planirano za novembarske fakture). |
+| Q9 | ~~BT-8 kod faktura bez stavki `S`~~ | **Zatvoreno:** podrška SEF-a 04.11.2026 — šifra se ne navodi kada ne nastaje obaveza obračuna PDV-a; dozvoljene su samo 3, 35, 432 (BR-12). `RS-R-005` dolazi iz SEF validacije koja još nije u funkciji (podrška 05.11.2026, vidi Q5); slanje bez nje je podrazumevano (BR-17). Demo: VLR-2026-902 prihvaćena bez validacije 04.11.2026. |

@@ -107,7 +107,7 @@ export class SefClient {
     }
   }
 
-  uploadUbl(xml: string, requestId: string, sendToCir: SendToCir = "No", executeValidation = true) {
+  uploadUbl(xml: string, requestId: string, sendToCir: SendToCir = "No", executeValidation = false) {
     return this.request(
       "POST",
       ENDPOINTS.uploadUbl,

@@ -16,7 +16,7 @@ You are working on **sef-mcp**, a local-first MCP server for the Serbian e-invoi
 
 ## Hard rules
 - `test/golden.test.ts` encodes the UBL SEF itself produced for a portal-created production invoice (not an API upload). If a change breaks it, the change is wrong unless a newer accepted invoice proves otherwise.
-- Never send without SEF validation on your own: `executeValidation=false` is only for a draft SEF validation already rejected, with the user's explicit consent (Q9).
+- Sending defaults to `executeValidation=false`, like the SEF portal (SEF support 05.11.2026: the validation option is not in operation yet). Do not change that default or add BT-8 to work around `RS-R-005`.
 - Never call the real SEF API from tests or scripts. Use the `fetchImpl` injection in `SefClient`.
 - Never add code that logs, prints, persists or returns `SEF_API_KEY` or request headers.
 - Never add an environment variable that changes the SEF base URL.

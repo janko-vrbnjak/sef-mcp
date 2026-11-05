@@ -4,6 +4,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/), versions: [SemVer](http
 
 ## [Unreleased]
 
+### Changed
+
+- `sef_send_invoice` now sends **without** SEF validation by default (`executeValidation=false`), like the SEF portal: SEF support confirmed on 05.11.2026 that the "Izvrši validaciju" option is not in operation yet. `true` only on explicit request, with its own requestId and a warning. Removed the "only after a validation rejection" guard. Closes Q5 and Q9.
+
 ## [0.2.0] — 2026-11-05
 
 ### Added
