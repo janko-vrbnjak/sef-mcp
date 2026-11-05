@@ -20,6 +20,7 @@ Speak Serbian (Latin script) unless the user writes in another language. Use pla
 Call `sef_check_setup`.
 - If the sef tools are not available at all: explain that the "SEF e-fakture" extension must be installed first (download the `.mcpb` file from the project page and double-click it), then stop.
 - Note `environment` (demo / prod) and `apiKeyConfigured`.
+- If `problems` is not empty, explain each one in plain words and how to fix it in the extension settings (e.g. "Okruženje" must be `demo` or `prod`). The server already fell back to the safe side (demo, no key), so nothing can be sent by mistake.
 
 ### 2. API key
 If `apiKeyConfigured` is false, explain:

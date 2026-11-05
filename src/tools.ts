@@ -132,6 +132,7 @@ export class SefTools {
       dataDir: this.cfg.dataDir,
       attachmentsDir: this.cfg.attachmentsDir ?? null,
       profilePath: this.cfg.profilePath,
+      problems: this.cfg.problems,
     };
     if (!this.current) {
       return {

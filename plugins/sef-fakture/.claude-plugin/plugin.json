@@ -1,6 +1,6 @@
 {
   "name": "sef-fakture",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Izdavanje e-faktura na SEF iz razgovora: podešavanje firme i kupaca, mesečna faktura, status, otkazivanje i storno — uz odobrenje pre svakog slanja. Radi uz SEF e-fakture (sef-mcp) ekstenziju.",
   "author": {
     "name": "Valorys Systems",

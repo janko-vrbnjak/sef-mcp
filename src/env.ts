@@ -21,51 +21,77 @@ export interface RuntimeConfig {
   maxAttachmentBytes: number;
   maxAttachments: number;
   requestTimeoutMs: number;
+  /** Configuration problems found at startup (already resolved to safe defaults). */
+  problems: string[];
+}
+
+/**
+ * A value counts as "not set" when it is missing, empty, or still contains an unsubstituted
+ * `${...}` placeholder. The Claude Desktop extension passes untouched optional fields as empty
+ * strings (or, in some versions, leaves placeholders as-is), so both must fall back to defaults.
+ */
+export function setting(v: string | undefined): string | undefined {
+  const t = v?.trim();
+  if (!t || /\$\{[^}]*\}/.test(t)) return undefined;
+  return t;
 }
 
 function bool(v: string | undefined): boolean {
-  return v !== undefined && ["1", "true", "yes"].includes(v.trim().toLowerCase());
+  const t = setting(v);
+  return t !== undefined && ["1", "true", "yes"].includes(t.toLowerCase());
 }
 
 function looksLikeUnresolvedSecretRef(v: string): boolean {
   return /^(op|vault|aws-sm|gcp-sm):\/\//i.test(v.trim());
 }
 
+/**
+ * Never throws: a configuration problem must not kill the server, because MCP clients (e.g. Claude
+ * Desktop) only show "server disconnected". Problems fall back to the safe side (demo, no key) and are
+ * reported in `problems`, which sef_check_setup and `sef-mcp doctor` show.
+ */
 export function loadRuntimeConfig(env: NodeJS.ProcessEnv = process.env): RuntimeConfig {
-  const rawEnv = (env.SEF_ENV ?? "demo").trim().toLowerCase();
-  if (rawEnv !== "demo" && rawEnv !== "prod") {
-    throw new Error(`SEF_ENV must be "demo" or "prod" (got "${rawEnv}")`);
-  }
+  const problems: string[] = [];
+  const requestedEnv = setting(env.SEF_ENV)?.toLowerCase() ?? "demo";
+  let sefEnv: SefEnvironment = "demo";
+  if (requestedEnv === "demo" || requestedEnv === "prod") sefEnv = requestedEnv;
+  else problems.push(`SEF_ENV / Okruženje "${requestedEnv}" nije "demo" ni "prod" — koristi se demo.`);
+
   // Per-environment keys (used by the Claude Desktop extension, where both keys live in the OS keychain)
-  // take precedence over the single SEF_API_KEY. Empty strings count as "not set".
-  const envKey = rawEnv === "prod" ? env.SEF_API_KEY_PROD : env.SEF_API_KEY_DEMO;
-  const apiKey = envKey?.trim() || env.SEF_API_KEY?.trim() || undefined;
+  // take precedence over the single SEF_API_KEY.
+  let apiKey = setting(sefEnv === "prod" ? env.SEF_API_KEY_PROD : env.SEF_API_KEY_DEMO) ?? setting(env.SEF_API_KEY);
   if (apiKey && looksLikeUnresolvedSecretRef(apiKey)) {
-    throw new Error(
-      "SEF_API_KEY looks like an unresolved secret reference (e.g. op://...). " +
+    apiKey = undefined;
+    problems.push(
+      "SEF_API_KEY looks like an unresolved secret reference (e.g. op://...); it is ignored. " +
         "Start the server through your secret manager, e.g. `op run --env-file=... -- sef-mcp serve`."
     );
   }
-  const dataDir = resolve(env.SEF_MCP_DATA_DIR?.trim() || join(homedir(), ".sef-mcp"));
-  const timeout = Number(env.SEF_MCP_TIMEOUT_MS ?? 30000);
+  const dataDirSetting = setting(env.SEF_MCP_DATA_DIR);
+  const dataDir = resolve(dataDirSetting ?? join(homedir(), ".sef-mcp"));
+  const profileSetting = setting(env.SEF_MCP_PROFILE);
+  const attachmentsSetting = setting(env.SEF_MCP_ATTACHMENTS_DIR);
+  const timeout = Number(setting(env.SEF_MCP_TIMEOUT_MS) ?? 30000);
   // SEF limits (confirmed by the maintainer, 2026-11): 2 attachments, 1 MB each. Configurable downwards or,
   // if SEF raises them, upwards.
-  const maxAtt = Number(env.SEF_MCP_MAX_ATTACHMENT_BYTES ?? 1024 * 1024);
-  const maxCount = Number(env.SEF_MCP_MAX_ATTACHMENTS ?? 2);
+  const maxAtt = Number(setting(env.SEF_MCP_MAX_ATTACHMENT_BYTES) ?? 1024 * 1024);
+  const maxCount = Number(setting(env.SEF_MCP_MAX_ATTACHMENTS) ?? 2);
   return {
-    env: rawEnv,
+    env: sefEnv,
     apiKey,
     // Profile defaults to <dataDir>/profile.json so a guided setup can create it in place.
-    profilePath: env.SEF_MCP_PROFILE?.trim() ? resolve(env.SEF_MCP_PROFILE) : join(dataDir, "profile.json"),
+    profilePath: profileSetting ? resolve(profileSetting) : join(dataDir, "profile.json"),
     // One data dir may serve both environments: every audit entry records its env, and the
     // duplicate-number check filters by it.
     dataDir,
-    attachmentsDir: env.SEF_MCP_ATTACHMENTS_DIR?.trim() ? resolve(env.SEF_MCP_ATTACHMENTS_DIR) : undefined,
+    // Attachments are always confined to one folder; without a setting it is <dataDir>/prilozi.
+    attachmentsDir: attachmentsSetting ? resolve(attachmentsSetting) : join(dataDir, "prilozi"),
     readOnly: bool(env.SEF_MCP_READ_ONLY),
     allowProdWrite: bool(env.SEF_MCP_ALLOW_PROD_WRITE),
     maxAttachmentBytes: Number.isFinite(maxAtt) && maxAtt > 0 ? maxAtt : 1024 * 1024,
     maxAttachments: Number.isInteger(maxCount) && maxCount >= 0 ? maxCount : 2,
     requestTimeoutMs: Number.isFinite(timeout) && timeout > 0 ? timeout : 30000,
+    problems,
   };
 }
 

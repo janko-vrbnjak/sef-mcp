@@ -17,10 +17,21 @@ function fail(msg: string): never {
   process.exit(1);
 }
 
-/** A missing profile is not an error: the server starts in setup mode and the assistant guides the user. */
+/**
+ * Never exits on bad configuration: a missing profile starts setup mode, and an unreadable profile or a
+ * bad setting is reported through sef_check_setup instead of killing the process (MCP clients would only
+ * show "server disconnected").
+ */
 function setup(): SefTools {
   const cfg = loadRuntimeConfig();
-  const profile = existsSync(cfg.profilePath) ? loadProfile(cfg.profilePath) : undefined;
+  let profile;
+  if (existsSync(cfg.profilePath)) {
+    try {
+      profile = loadProfile(cfg.profilePath);
+    } catch (err) {
+      cfg.problems.push(`Profil firme nije ispravan (${cfg.profilePath}): ${(err as Error).message}`);
+    }
+  }
   return new SefTools(cfg, profile);
 }
 
@@ -46,6 +57,7 @@ async function main(): Promise<void> {
     case "doctor": {
       const tools = setup();
       process.stdout.write(JSON.stringify(tools.checkSetup(), null, 2) + "\n");
+      if (tools.cfg.problems.length) fail(`configuration problems:\n  - ${tools.cfg.problems.join("\n  - ")}`);
       if (rest.includes("--ping")) process.stdout.write(JSON.stringify(await tools.ping(), null, 2) + "\n");
       process.stdout.write("OK\n");
       return;

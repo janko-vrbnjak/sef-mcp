@@ -4,6 +4,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/), versions: [SemVer](http
 
 ## [Unreleased]
 
+## [0.2.2] — 2026-11-05
+
+### Fixed
+
+- **Claude Desktop extension did not start** when "Okruženje" was left untouched: the extension passes untouched fields as empty strings, and an empty `SEF_ENV` made the server exit right after `initialize` ("Server disconnected"). Affected every fresh install of 0.2.0 and 0.2.1.
+- Empty settings and unsubstituted `${...}` placeholders now count as not set and get their defaults (all variables).
+- Configuration problems no longer stop the server: invalid `SEF_ENV` → demo, unresolved `op://` key → ignored, unreadable profile → setup mode. They are listed in `sef_check_setup` (`problems`), on stderr and by `sef-mcp doctor` (exit 1). The onboarding skill explains them.
+- Attachments folder defaults to `<data folder>/prilozi`, so attachments work without choosing a folder.
+- The server reported version 0.1.0; it now reads the version from `package.json`.
+
+### Added
+
+- `test/startup.test.ts`: starts the real server with untouched extension values, placeholders and a broken profile and requires an `initialize` answer.
+
 ## [0.2.1] — 2026-11-05
 
 ### Changed

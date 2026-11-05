@@ -67,7 +67,7 @@ Kad Claude traži dozvolu za slanje, otkazivanje ili storno, **nikad ne birajte 
 
 **Ja sam knjigovođa i fakturišem za više firmi.** Trenutno jedna instalacija važi za jednu firmu. Podrška za više firmi je u planu ([roadmap](roadmap.md)).
 
-**Gde su moji podaci?** U folderu koji ste izabrali (podrazumevano `SEF-fakture` u vašem korisničkom folderu): podaci o firmi i kupcima, nacrti i dnevnik slanja. Ništa se ne šalje nikome osim SEF-u. Vidi [privatnost](privatnost.md).
+**Gde su moji podaci?** U folderu za podatke iz podešavanja ekstenzije: podaci o firmi i kupcima, nacrti i dnevnik slanja; PDF prilozi u podfolderu `prilozi` (ako niste izabrali poseban folder za priloge). Ako folder niste izabrali, to je skriveni folder `.sef-mcp` u vašem korisničkom folderu — pitajte Claude-a „gde su moji SEF podaci?“ i reći će vam tačnu putanju. Ništa se ne šalje nikome osim SEF-u. Vidi [privatnost](privatnost.md).
 
 **Pogrešio sam fakturu.** Recite „storniraj fakturu …“ ili „otkaži fakturu …“. Claude će proveriti status na SEF-u i predložiti pravu radnju.
 

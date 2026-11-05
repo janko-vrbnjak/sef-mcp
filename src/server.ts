@@ -4,6 +4,7 @@
  * Tool annotations tell the client which tools change state, so clients like
  * Claude Desktop ask the user before running send/cancel.
  */
+import { readFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -12,7 +13,14 @@ import { explainSefError } from "./sef/errors.js";
 import { CompanyInput, CustomerInput, type CompanyArgs, type CustomerArgs } from "./setup.js";
 import { DraftInvoiceInput, type DraftInvoiceArgs, SefTools } from "./tools.js";
 
-const VERSION = "0.1.0";
+// Version from the package.json next to dist/ (present in the npm package and in the .mcpb bundle).
+const VERSION: string = (() => {
+  try {
+    return (JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8")) as { version: string }).version;
+  } catch {
+    return "unknown";
+  }
+})();
 
 type ToolResult = { content: Array<{ type: "text"; text: string }>; isError?: boolean };
 
@@ -235,4 +243,5 @@ export async function startServer(tools: SefTools): Promise<void> {
   await server.connect(transport);
   // stdout is the protocol channel; diagnostics go to stderr only.
   process.stderr.write(`sef-mcp ${VERSION} running on stdio (env=${tools.cfg.env}, readOnly=${tools.cfg.readOnly})\n`);
+  for (const p of tools.cfg.problems) process.stderr.write(`sef-mcp: configuration problem: ${p}\n`);
 }

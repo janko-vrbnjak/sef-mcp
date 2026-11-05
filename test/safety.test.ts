@@ -33,8 +33,10 @@ test("read-only mode blocks writes everywhere", () => {
   assert.throws(() => assertWriteAllowed(cfg, "send"), /read-only/);
 });
 
-test("unresolved 1Password reference is rejected with a helpful message", () => {
-  assert.throws(() => loadRuntimeConfig({ SEF_API_KEY: "op://Vault/SEF/credential" }), /op run/);
+test("unresolved 1Password reference is ignored and reported with a helpful message", () => {
+  const cfg = loadRuntimeConfig({ SEF_API_KEY: "op://Vault/SEF/credential" });
+  assert.equal(cfg.apiKey, undefined);
+  assert.ok(cfg.problems.some((p) => p.includes("op run")));
 });
 
 test("resolveInside blocks traversal and symlink escape", () => {

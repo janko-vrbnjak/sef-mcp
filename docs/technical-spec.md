@@ -46,7 +46,11 @@ Secrets enter only through environment variables, injected by a secret manager (
 | `SEF_API_KEY_DEMO` / `SEF_API_KEY_PROD` | — | Per-environment keys (used by the Claude extension). The one matching `SEF_ENV` wins over `SEF_API_KEY`; empty counts as unset. |
 | `SEF_MCP_PROFILE` | `<SEF_MCP_DATA_DIR>/profile.json` | Path to profile JSON. If the file does not exist, the server starts in **setup mode** (see §4). |
 | `SEF_MCP_DATA_DIR` | `~/.sef-mcp` | Drafts + audit log (dir `0700`, files `0600`) |
-| `SEF_MCP_ATTACHMENTS_DIR` | — | Only directory attachments may come from |
+| `SEF_MCP_ATTACHMENTS_DIR` | `<SEF_MCP_DATA_DIR>/prilozi` | Only directory attachments may come from (created if missing) |
+
+**Empty and placeholder values.** Every setting that is missing, empty, or still contains an unsubstituted `${...}` placeholder counts as not set and gets its default. The Claude Desktop extension passes untouched optional fields as empty strings and does not apply manifest defaults to them, so the code defaults are what users get.
+
+**No startup failure on bad configuration.** `loadRuntimeConfig` never throws: an invalid `SEF_ENV` falls back to `demo`, an unresolved `op://` key is ignored, and an unreadable profile starts setup mode. Each case is recorded in `problems`, shown by `sef_check_setup`, written to stderr at start and makes `sef-mcp doctor` exit 1. Reason: MCP clients only show "server disconnected" when the process exits, which a non-technical user cannot diagnose.
 | `SEF_MCP_READ_ONLY` | `false` | Blocks send/cancel |
 | `SEF_MCP_ALLOW_PROD_WRITE` | `false` | Second switch required for prod writes |
 | `SEF_MCP_MAX_ATTACHMENTS` | `2` | Max attachments per invoice (SEF limit) |
@@ -205,7 +209,7 @@ When SEF publishes a new release: read its notes, add rows here, add a test name
 | `dist/sef-mcp-<v>.mcpb` + `dist/sef-mcp.mcpb` | `npm run pack:mcpb` (stages runtime files in `build/mcpb`, `npm ci --omit=dev --ignore-scripts`, `mcpb validate` + `mcpb pack`) | Claude Desktop / Cowork: one-click install, bundled Node.js, keys in the OS keychain |
 | `dist/sef-fakture-<v>.plugin` + `dist/sef-fakture.plugin` | `npm run pack:plugin` | Skills `sef-podesavanje` and `sef-fakturisanje` (Cowork, Claude Code) |
 
-Extension settings → environment variables (`packaging/mcpb/manifest.json`): `sef_env` → `SEF_ENV`, `api_key_demo` / `api_key_prod` (sensitive) → `SEF_API_KEY_DEMO` / `SEF_API_KEY_PROD`, `allow_prod_write` → `SEF_MCP_ALLOW_PROD_WRITE`, `data_dir` → `SEF_MCP_DATA_DIR`, `attachments_dir` → `SEF_MCP_ATTACHMENTS_DIR` (created if missing). The manifest version is overwritten from `package.json` at pack time.
+Extension settings → environment variables (`packaging/mcpb/manifest.json`): `sef_env` → `SEF_ENV`, `api_key_demo` / `api_key_prod` (sensitive) → `SEF_API_KEY_DEMO` / `SEF_API_KEY_PROD`, `allow_prod_write` → `SEF_MCP_ALLOW_PROD_WRITE`, `data_dir` → `SEF_MCP_DATA_DIR`, `attachments_dir` → `SEF_MCP_ATTACHMENTS_DIR` (created if missing). Untouched fields arrive empty (see §2), so the manifest `default` values are documentation only; the code defaults apply. The manifest version is overwritten from `package.json` at pack time.
 
 The unversioned copies are what the user guide links to: `https://github.com/jvrbnjak89/sef-mcp/releases/latest/download/sef-mcp.mcpb` and `…/sef-fakture.plugin`. GitHub's `latest` skips drafts and pre-releases, so a release meant for users must be a normal release.
 
