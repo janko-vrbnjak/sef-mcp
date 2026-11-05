@@ -4,7 +4,6 @@
  * Tool annotations tell the client which tools change state, so clients like
  * Claude Desktop ask the user before running send/cancel.
  */
-import { readFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -13,14 +12,7 @@ import { explainSefError } from "./sef/errors.js";
 import { CompanyInput, CustomerInput, type CompanyArgs, type CustomerArgs } from "./setup.js";
 import { DraftInvoiceInput, type DraftInvoiceArgs, SefTools } from "./tools.js";
 
-// Version from the package.json next to dist/ (present in the npm package and in the .mcpb bundle).
-const VERSION: string = (() => {
-  try {
-    return (JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8")) as { version: string }).version;
-  } catch {
-    return "unknown";
-  }
-})();
+import { SERVER_VERSION as VERSION } from "./version.js";
 
 type ToolResult = { content: Array<{ type: "text"; text: string }>; isError?: boolean };
 

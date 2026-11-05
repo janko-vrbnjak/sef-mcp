@@ -18,9 +18,9 @@ Sve radi na vašem računaru. Vaš SEF ključ se čuva u sigurnom skladištu sis
 
 ### 1. Instalirajte ekstenziju „SEF e-fakture“
 
-Preuzmite **[sef-mcp.mcpb](https://github.com/jvrbnjak89/sef-mcp/releases/latest/download/sef-mcp.mcpb)** (uvek najnovija verzija), dva puta kliknite na fajl i u Claude aplikaciji izaberite **Install**.
+Preuzmite **[sef-mcp.mcpb](https://github.com/janko-vrbnjak/sef-mcp/releases/latest/download/sef-mcp.mcpb)** (uvek najnovija verzija), dva puta kliknite na fajl i u Claude aplikaciji izaberite **Install**.
 
-Sve verzije i opis izmena: [stranica izdanja](https://github.com/jvrbnjak89/sef-mcp/releases).
+Sve verzije i opis izmena: [stranica izdanja](https://github.com/janko-vrbnjak/sef-mcp/releases).
 
 ### 2. Napravite probni (demo) ključ
 
@@ -33,7 +33,14 @@ Ključ nikad ne lepite u razgovor sa Claude-om — samo u ovo polje.
 
 ### 3. Dodajte skillove „sef-fakture“
 
-Preuzmite **[sef-fakture.plugin](https://github.com/jvrbnjak89/sef-mcp/releases/latest/download/sef-fakture.plugin)** i otvorite ga u Claude aplikaciji. Skillovi Claude-u govore kako da vas vodi kroz podešavanje i fakturisanje.
+Skillovi Claude-u govore kako da vas vodi kroz podešavanje i fakturisanje. Preporučen način, jer se tada sami ažuriraju:
+
+1. U Claude aplikaciji otvorite **Customize → Plugins**.
+2. Izaberite **Add marketplace** i upišite `janko-vrbnjak/sef-mcp`.
+3. Instalirajte **sef-fakture**.
+4. Na tom marketplace-u uključite **Sync automatically**.
+
+Bez automatskog ažuriranja: preuzmite **[sef-fakture.plugin](https://github.com/janko-vrbnjak/sef-mcp/releases/latest/download/sef-fakture.plugin)** i otvorite ga u Claude aplikaciji.
 
 ### 4. Recite Claude-u: „Podesi moju firmu za SEF“
 
@@ -57,6 +64,11 @@ Oba podešavanja (2 i 3) su potrebna. To je namerno, da se prava faktura nikad n
 
 Kad Claude traži dozvolu za slanje, otkazivanje ili storno, **nikad ne birajte „uvek dozvoli“**.
 
+## Ažuriranja
+
+- **Skillovi** se ažuriraju sami ako ste ih dodali preko marketplace-a i uključili **Sync automatically**.
+- **Ekstenzija** se za sada ne ažurira sama. Kada izađe nova verzija koja vam treba, Claude će vam to reći i dati link: preuzmite fajl, dva puta kliknite i izaberite **Install**. Podaci o firmi, kupci, nacrti i podešavanja ostaju.
+
 ## Česta pitanja
 
 **Nemam menadžer lozinki.** Ne treba vam. Ključ čuva sam operativni sistem.
@@ -75,7 +87,7 @@ Kad Claude traži dozvolu za slanje, otkazivanje ili storno, **nikad ne birajte 
 
 ## Podrška
 
-- Prijava problema: [GitHub issues](https://github.com/jvrbnjak89/sef-mcp/issues) (bez ključeva i bez pravih podataka kupaca!)
+- Prijava problema: [GitHub issues](https://github.com/janko-vrbnjak/sef-mcp/issues) (bez ključeva i bez pravih podataka kupaca!)
 - Pomoć pri podešavanju i podrška: support@valorys.rs
 
 Alat nije zvaničan proizvod Ministarstva finansija. Za sadržaj i poresku ispravnost faktura odgovara izdavalac.

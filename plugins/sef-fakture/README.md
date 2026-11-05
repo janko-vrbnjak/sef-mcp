@@ -7,9 +7,15 @@ Dva skilla koja Claude-u govore **kada i kako** da koristi alate iz ekstenzije *
 | `sef-podesavanje` | Prvo podešavanje: API ključ, podaci o firmi, kupci, proba na demo SEF-u, prelazak na produkciju |
 | `sef-fakturisanje` | Svakodnevno: mesečna faktura, status, otkazivanje i storno, objašnjenje SEF grešaka |
 
+## Instalacija
+
+- **Cowork / Claude aplikacija:** Customize → Plugins → Add marketplace → `janko-vrbnjak/sef-mcp` → instalirajte `sef-fakture` → uključite **Sync automatically**.
+- **Claude Code:** `/plugin marketplace add janko-vrbnjak/sef-mcp`, pa `/plugin install sef-fakture@sef-mcp`.
+- **Bez marketplace-a:** [sef-fakture.plugin](https://github.com/janko-vrbnjak/sef-mcp/releases/latest/download/sef-fakture.plugin) (bez automatskog ažuriranja).
+
 ## Preduslov
 
-Plugin ne sadrži sam server. Prvo instalirajte ekstenziju **SEF e-fakture** — preuzmite [sef-mcp.mcpb](https://github.com/jvrbnjak89/sef-mcp/releases/latest/download/sef-mcp.mcpb) i dva puta kliknite na fajl. Uputstvo: [docs/za-korisnike.md](../../docs/za-korisnike.md).
+Plugin ne sadrži sam server. Prvo instalirajte ekstenziju **SEF e-fakture** — preuzmite [sef-mcp.mcpb](https://github.com/janko-vrbnjak/sef-mcp/releases/latest/download/sef-mcp.mcpb) i dva puta kliknite na fajl. Uputstvo: [docs/za-korisnike.md](../../docs/za-korisnike.md).
 
 ## Pravila koja skillovi uvek poštuju
 

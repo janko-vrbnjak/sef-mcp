@@ -18,8 +18,9 @@ Speak Serbian (Latin script) unless the user writes in another language. Use pla
 
 ### 1. Check what is installed
 Call `sef_check_setup`.
-- If the sef tools are not available at all: explain that the "SEF e-fakture" extension must be installed first (download the `.mcpb` file from the project page and double-click it), then stop.
+- If the sef tools are not available at all: explain that the "SEF e-fakture" extension must be installed first (download https://github.com/janko-vrbnjak/sef-mcp/releases/latest/download/sef-mcp.mcpb and double-click it), then stop.
 - Note `environment` (demo / prod) and `apiKeyConfigured`.
+- **Version check (no network):** this plugin needs sef-mcp server **0.3.0** or newer (`Minimum sef-mcp server version: 0.3.0`). If `serverVersion` is missing (servers before 0.3.0 do not report it) or lower, tell the user in one sentence that the "SEF e-fakture" extension is out of date, give the link https://github.com/janko-vrbnjak/sef-mcp/releases/latest/download/sef-mcp.mcpb, and say: download, double-click, Install — data and settings stay. Continue only with what the old version supports, and never as a reason to skip a safety rule.
 - If `problems` is not empty, explain each one in plain words and how to fix it in the extension settings (e.g. "Okruženje" must be `demo` or `prod`). The server already fell back to the safe side (demo, no key), so nothing can be sent by mistake.
 
 ### 2. API key

@@ -19,6 +19,7 @@ Speak Serbian (Latin script) unless the user writes in another language. Keep an
 ## Monthly invoice
 
 1. `sef_check_setup` — if `profileConfigured` is false, switch to the **sef-podesavanje** skill.
+   **Version check (no network):** this plugin needs sef-mcp server **0.3.0** or newer (`Minimum sef-mcp server version: 0.3.0`). If `serverVersion` is missing (servers before 0.3.0 do not report it) or lower, tell the user in one sentence that the "SEF e-fakture" extension is out of date, give the link https://github.com/janko-vrbnjak/sef-mcp/releases/latest/download/sef-mcp.mcpb, and say: download, double-click, Install — data and settings stay. Continue only with what the old version supports, and never as a reason to skip a safety rule.
 2. Collect (ask only what is missing; propose defaults and let the user confirm):
    - **Kupac** — match by name to `sef_list_customers`; if unknown, offer to add it (sef-podesavanje).
    - **Broj fakture** — ask; if the user says "sledeći", propose the next number after the last one they mention, never invent a series.

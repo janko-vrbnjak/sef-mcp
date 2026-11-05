@@ -7,15 +7,15 @@
   "long_description": "sef-mcp radi na vašem računaru. Claude priprema fakturu iz opisa, vi pregledate iznose i kupca, i tek posle vašeg odobrenja faktura ide na SEF. API ključ se čuva u sigurnom skladištu operativnog sistema (Keychain na Mac-u, Credential Manager na Windows-u), nikad u fajlu. Podrazumevano radi na demo SEF-u; produkcija zahteva dva izričita podešavanja. Podaci o firmi i kupcima unose se kroz razgovor — bez uređivanja fajlova.",
   "author": {
     "name": "Valorys Systems",
-    "url": "https://github.com/jvrbnjak89"
+    "url": "https://github.com/janko-vrbnjak"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jvrbnjak89/sef-mcp"
+    "url": "https://github.com/janko-vrbnjak/sef-mcp"
   },
-  "homepage": "https://github.com/jvrbnjak89/sef-mcp",
-  "documentation": "https://github.com/jvrbnjak89/sef-mcp/blob/main/docs/za-korisnike.md",
-  "support": "https://github.com/jvrbnjak89/sef-mcp/issues",
+  "homepage": "https://github.com/janko-vrbnjak/sef-mcp",
+  "documentation": "https://github.com/janko-vrbnjak/sef-mcp/blob/main/docs/za-korisnike.md",
+  "support": "https://github.com/janko-vrbnjak/sef-mcp/issues",
   "license": "MIT",
   "keywords": ["sef", "efaktura", "e-faktura", "e-invoice", "srbija", "serbia", "ubl", "knjigovodstvo"],
   "server": {
@@ -98,5 +98,5 @@
     "platforms": ["darwin", "win32", "linux"],
     "runtimes": { "node": ">=20.11.0" }
   },
-  "privacy_policies": ["https://github.com/jvrbnjak89/sef-mcp/blob/main/docs/privatnost.md"]
+  "privacy_policies": ["https://github.com/janko-vrbnjak/sef-mcp/blob/main/docs/privatnost.md"]
 }

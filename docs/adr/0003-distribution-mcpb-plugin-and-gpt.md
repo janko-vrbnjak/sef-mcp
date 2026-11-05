@@ -12,6 +12,11 @@ Target users now include non-technical entrepreneurs and accountants who use AI 
 4. Technical users keep the existing path (git clone, `op run`, any MCP client).
 5. Releases attach `sef-mcp-<v>.mcpb` and `sef-fakture-<v>.plugin` to GitHub Releases. Marketplaces (e.g. Agensi) may list the skill for free, pointing to the release page.
 
+## Updates (added 2026-11-05)
+- Skills: the repository doubles as a plugin marketplace; users add `janko-vrbnjak/sef-mcp` once and enable *Sync automatically*.
+- Extension: privately distributed `.mcpb` files are not auto-updated by Claude; only directory listings are. Until the extension is in Anthropic's directory, the auto-updating skills tell users when the server is older than they need (no network call from the server; rejected alternative: a GitHub update check in the server, which would break the "only SEF" promise).
+- Open: whether a plugin connector can carry a local server with bundled Node.js and keychain-stored keys, which would make one install cover both parts.
+
 ## GPT (ChatGPT Business) — findings and options
 Findings (Nov 2026): ChatGPT custom connectors accept only **remote MCP servers over HTTPS** (OAuth); write-capable tools are available on Business/Enterprise. Local stdio servers are not supported. ChatGPT also supports skills, but skill code runs in OpenAI's environment, which cannot hold the user's SEF key safely or reach SEF on their behalf by design of this project.
 

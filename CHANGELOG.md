@@ -4,6 +4,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/), versions: [SemVer](http
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-11-05
+
+### Added
+
+- The repository is a plugin marketplace (`.claude-plugin/marketplace.json`): add `janko-vrbnjak/sef-mcp` in Cowork / Claude Code and turn on *Sync automatically* to get skill updates without re-downloading.
+- No-network version check: `sef_check_setup` reports `serverVersion`; both skills require server ≥ 0.3.0 and tell users with an older extension where to download the new one.
+- `sef_list_customers` also returns MB, JBKJS, address, e-mail and VAT status, so the user can check what goes on the invoice.
+- `test/distribution.test.ts`: marketplace entry, version alignment (package, plugin, server) and skill minimum version.
+
 ## [0.2.2] — 2026-11-05
 
 ### Fixed

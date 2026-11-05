@@ -11,6 +11,7 @@ import { resolveInside } from "./safety.js";
 import { SefClient, type SendToCir } from "./sef/client.js";
 import { ProfileStore, type CompanyArgs, type CustomerArgs } from "./setup.js";
 import { requestIdFromHash, sha256, Store } from "./store.js";
+import { SERVER_VERSION } from "./version.js";
 import { buildInvoiceXml, type UblAttachment, type UblLine } from "./ubl/build.js";
 
 const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "YYYY-MM-DD");
@@ -125,6 +126,7 @@ export class SefTools {
 
   checkSetup() {
     const base = {
+      serverVersion: SERVER_VERSION,
       environment: this.cfg.env,
       apiKeyConfigured: Boolean(this.cfg.apiKey),
       readOnly: this.cfg.readOnly,
@@ -156,7 +158,18 @@ export class SefTools {
   }
 
   listCustomers() {
-    return this.profile.customers.map((c) => ({ id: c.id, name: c.name, pib: c.pib, defaults: c.defaults }));
+    // Public business data only, so the user can check exactly what goes on the invoice.
+    return this.profile.customers.map((c) => ({
+      id: c.id,
+      name: c.name,
+      pib: c.pib,
+      mb: c.mb ?? null,
+      jbkjs: c.jbkjs ?? null,
+      address: c.address,
+      email: c.email ?? null,
+      vatRegistered: c.vatRegistered,
+      defaults: c.defaults,
+    }));
   }
 
   vatExemptionReasons() {

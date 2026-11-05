@@ -1,0 +1,14 @@
+{
+  "name": "sef-mcp",
+  "owner": {
+    "name": "Valorys Systems",
+    "email": "support@valorys.rs"
+  },
+  "plugins": [
+    {
+      "name": "sef-fakture",
+      "source": "./plugins/sef-fakture",
+      "description": "Izdavanje e-faktura na SEF iz razgovora: podešavanje firme i kupaca, mesečna faktura, status, otkazivanje i storno. Radi uz ekstenziju SEF e-fakture (sef-mcp)."
+    }
+  ]
+}
