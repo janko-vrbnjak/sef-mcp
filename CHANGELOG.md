@@ -9,9 +9,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/), versions: [SemVer](http
 - MCP prompts: `mesecna-faktura`, `podesavanje-firme`, `status-fakture`, `storno-ili-otkazivanje`. Each restates the safety rules, so they hold without the skills too.
 - MCP resources: `sef-mcp://docs/greske`, `sef-mcp://docs/statusi`, `sef-mcp://docs/pravila`, generated from the server's own data (error table, rules, limits, current environment).
 - `test/content.test.ts`: resources and prompts over the real server. Every error explanation and status action must also appear in the plugin's references.
+- Official MCP Registry: `server.json` (`io.github.janko-vrbnjak/sef-mcp`, MCPB package) and a `mcp-registry` release job that adds the SHA-256 of the released `.mcpb`, validates and publishes with GitHub OIDC. `mcp-publisher` is pinned and its signature verified.
+- `scripts/registry-server-json.mjs`; `test/distribution.test.ts` keeps `server.json` aligned with the release.
 
 ### Changed
 
+- Release workflow: default permission `contents: read`; only the release job can write; the tag must also match `server.json`.
 - `src/sef/errors.ts` exports the error table (`KNOWN_SEF_ERRORS`, `KNOWN_HTTP_ERRORS`) as the single source for explanations and docs.
 
 ## [0.3.0] — 2026-11-05

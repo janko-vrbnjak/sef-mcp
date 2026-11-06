@@ -46,3 +46,19 @@ test("both skills state the same minimum server version, not newer than this rel
   assert.equal(mins[0], mins[1]);
   assert.ok(cmp(mins[0]!, json("package.json").version) <= 0, "minimum server version is newer than this release");
 });
+
+test("server.json for the MCP Registry matches this release", () => {
+  const server = json("server.json");
+  const version = json("package.json").version;
+  assert.equal(server.name, "io.github.janko-vrbnjak/sef-mcp");
+  assert.equal(server.version, version);
+  assert.ok(server.description.length >= 1 && server.description.length <= 100, "description must be 1–100 characters");
+  assert.ok(server.title.length <= 100);
+  assert.equal(server.packages.length, 1);
+  const pkg = server.packages[0];
+  assert.equal(pkg.registryType, "mcpb");
+  assert.equal(pkg.identifier, `https://github.com/janko-vrbnjak/sef-mcp/releases/download/v${version}/sef-mcp.mcpb`);
+  assert.equal(pkg.transport.type, "stdio");
+  // The hash is computed in CI from the released file; a committed one would go stale.
+  assert.equal(pkg.fileSha256, undefined);
+});

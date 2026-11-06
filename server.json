@@ -1,0 +1,21 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.janko-vrbnjak/sef-mcp",
+  "title": "SEF e-fakture (Srbija)",
+  "description": "Serbian SEF e-invoicing from Claude: drafts, approval before sending, status, cancel and storno.",
+  "repository": {
+    "url": "https://github.com/janko-vrbnjak/sef-mcp",
+    "source": "github"
+  },
+  "websiteUrl": "https://github.com/janko-vrbnjak/sef-mcp",
+  "version": "0.3.0",
+  "packages": [
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/janko-vrbnjak/sef-mcp/releases/download/v0.3.0/sef-mcp.mcpb",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

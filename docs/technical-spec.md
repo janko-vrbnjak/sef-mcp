@@ -232,18 +232,21 @@ Extension settings → environment variables (`packaging/mcpb/manifest.json`): `
 
 The unversioned copies are what the user guide links to: `https://github.com/janko-vrbnjak/sef-mcp/releases/latest/download/sef-mcp.mcpb` and `…/sef-fakture.plugin`. GitHub's `latest` skips drafts and pre-releases, so a release meant for users must be a normal release.
 
-**Release (automated, `.github/workflows/release.yml`):** pushing a tag `vX.Y.Z` runs tests, checks that the tag matches `package.json` and `plugin.json`, builds both artifacts and publishes a GitHub Release with the four files. Notes come from `docs/releases/vX.Y.Z.md` (user-facing, Serbian) plus the matching CHANGELOG section.
+**Release (automated, `.github/workflows/release.yml`):** pushing a tag `vX.Y.Z` runs tests, checks that the tag matches `package.json`, `plugin.json` and `server.json`, builds both artifacts and publishes a GitHub Release with the four files. Notes come from `docs/releases/vX.Y.Z.md` (user-facing, Serbian) plus the matching CHANGELOG section.
+
+**MCP Registry (automated, job `mcp-registry` in the same workflow).** After the GitHub Release exists, the server is listed in the official registry as `io.github.janko-vrbnjak/sef-mcp` (`registryType: mcpb`). The committed `server.json` has no `fileSha256`: the job downloads the released `sef-mcp.mcpb`, `scripts/registry-server-json.mjs` adds its SHA-256 (and refuses if version or URL disagree with `package.json`), then `mcp-publisher validate`, `login github-oidc` and `publish`. The job has only `contents: read` + `id-token: write`; `mcp-publisher` is pinned (`MCP_PUBLISHER_VERSION`) and its sigstore signature is verified with cosign against the registry's release workflow. Registry rules this relies on (registry source v1.8.7, `internal/validators/registries/mcpb.go`): the URL is a GitHub release asset `/owner/repo/releases/download/tag/file`, contains "mcp", is reachable (HEAD) at publish time, and the hash is present; a published version can never be changed or re-published. Set the repository variable `MCP_REGISTRY_PUBLISH=false` to skip the job. Check: `curl "https://registry.modelcontextprotocol.io/v0.1/servers?search=io.github.janko-vrbnjak/sef-mcp"`.
 
 **Updates.** The repository is a plugin marketplace (`.claude-plugin/marketplace.json` → `./plugins/sef-fakture`). Users who add `janko-vrbnjak/sef-mcp` as a marketplace and turn on _Sync automatically_ get new skills on every pushed `plugin.json` version — the version must be bumped, or clients keep the old copy. The `.mcpb` extension is distributed privately, so Claude does not update it; until it is listed in Anthropic's extension directory, the skills perform a **no-network version check**: `sef_check_setup` reports `serverVersion`, both SKILL.md files state `Minimum sef-mcp server version: X.Y.Z`, and an older (or pre-0.3.0, which reports none) server gets a one-sentence notice with the `latest/download` link. The server itself never checks for updates — it talks only to SEF (`docs/privatnost.md`). `test/distribution.test.ts` keeps marketplace, plugin and package versions consistent and the minimum version ≤ the released version. Raise the minimum only when the skills rely on a new tool or behaviour.
 
 Release checklist:
 
 1. `npm test` green; move CHANGELOG _Unreleased_ into `## [X.Y.Z] — date`.
-2. Bump `package.json`, `package-lock.json` and `plugins/sef-fakture/.claude-plugin/plugin.json`.
+2. Bump `package.json`, `package-lock.json`, `plugins/sef-fakture/.claude-plugin/plugin.json` and `server.json` (`version` and the `v…` in `identifier`).
 3. Write `docs/releases/vX.Y.Z.md`.
 4. Locally: `npm run pack:mcpb && npm run pack:plugin`, install the `.mcpb` on a machine without Node.js, run the onboarding skill on demo.
 5. Commit, then `git tag vX.Y.Z && git push origin vX.Y.Z`.
 6. Open the user guide links and check that both files download.
+7. Check that the `mcp-registry` job is green and the new version appears in the registry search.
 
 ## 10. Conventions
 
