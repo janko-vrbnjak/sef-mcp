@@ -12,31 +12,33 @@ Ostatak ove stranice je za tehničke korisnike i developere.
 
 ## Zašto još jedan SEF MCP
 
-| | Hostovani MCP servisi | sef-mcp |
-|---|---|---|
-| Gde ide tvoj API ključ | Kroz tuđi server | Ostaje na tvom računaru |
-| Ko vidi fakture | Treća strana | Samo ti i SEF |
-| Slanje | Jedan poziv | Nacrt → tvoje odobrenje → slanje |
-| Pravila firme (PDV status, kupci, numeracija) | U promptu | U lokalnom profilu, validirano |
-| Podrazumevano okruženje | Različito | **demo** (bez poreskog efekta) |
+|                                               | Hostovani MCP servisi | sef-mcp                          |
+| --------------------------------------------- | --------------------- | -------------------------------- |
+| Gde ide tvoj API ključ                        | Kroz tuđi server      | Ostaje na tvom računaru          |
+| Ko vidi fakture                               | Treća strana          | Samo ti i SEF                    |
+| Slanje                                        | Jedan poziv           | Nacrt → tvoje odobrenje → slanje |
+| Pravila firme (PDV status, kupci, numeracija) | U promptu             | U lokalnom profilu, validirano   |
+| Podrazumevano okruženje                       | Različito             | **demo** (bez poreskog efekta)   |
 
 ## Šta ume (v0.1)
 
-| Alat | Šta radi | Menja stanje? |
-|---|---|---|
-| `sef_check_setup` | Okruženje, sigurnosni prekidači, profil | ne |
-| `sef_setup_company` | Podešava firmu kroz razgovor (pregled → potvrda) | samo lokalno |
-| `sef_add_customer` | Dodaje ili menja kupca (pregled → potvrda) | samo lokalno |
-| `sef_ping` | Proverava ključ i vezu sa SEF-om | ne |
-| `sef_list_customers` | Kupci iz profila | ne |
-| `sef_list_vat_exemption_reasons` | Zvanične šifre izuzeća (npr. `PDV-RS-33`) | ne |
-| `sef_list_unit_measures` | Zvanične jedinice mere (npr. `MON`, `HUR`, `H87`) | ne |
-| `sef_draft_invoice` | Pravi UBL fakturu lokalno, vraća iznose i `approvalCode` | samo lokalno |
-| `sef_get_draft` | Čita nacrt (opciono sa XML-om) | ne |
-| `sef_send_invoice` | Šalje **odobren** nacrt na SEF (bez SEF validacije, kao portal — ta opcija na SEF-u još nije u funkciji) | **da** |
-| `sef_get_invoice` / `sef_list_invoice_ids` | Status i pregled poslatih faktura | ne |
-| `sef_cancel_invoice` | Otkazuje fakturu u statusu Nacrt / Nova / Greška pri slanju | **da** |
-| `sef_storno_invoice` | Stornira fakturu u statusu Poslata / Prihvaćena / Odbijena | **da** |
+| Alat                                       | Šta radi                                                                                                 | Menja stanje? |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------- | ------------- |
+| `sef_check_setup`                          | Okruženje, sigurnosni prekidači, profil                                                                  | ne            |
+| `sef_setup_company`                        | Podešava firmu kroz razgovor (pregled → potvrda)                                                         | samo lokalno  |
+| `sef_add_customer`                         | Dodaje ili menja kupca (pregled → potvrda)                                                               | samo lokalno  |
+| `sef_ping`                                 | Proverava ključ i vezu sa SEF-om                                                                         | ne            |
+| `sef_list_customers`                       | Kupci iz profila                                                                                         | ne            |
+| `sef_list_vat_exemption_reasons`           | Zvanične šifre izuzeća (npr. `PDV-RS-33`)                                                                | ne            |
+| `sef_list_unit_measures`                   | Zvanične jedinice mere (npr. `MON`, `HUR`, `H87`)                                                        | ne            |
+| `sef_draft_invoice`                        | Pravi UBL fakturu lokalno, vraća iznose i `approvalCode`                                                 | samo lokalno  |
+| `sef_get_draft`                            | Čita nacrt (opciono sa XML-om)                                                                           | ne            |
+| `sef_send_invoice`                         | Šalje **odobren** nacrt na SEF (bez SEF validacije, kao portal — ta opcija na SEF-u još nije u funkciji) | **da**        |
+| `sef_get_invoice` / `sef_list_invoice_ids` | Status i pregled poslatih faktura                                                                        | ne            |
+| `sef_cancel_invoice`                       | Otkazuje fakturu u statusu Nacrt / Nova / Greška pri slanju                                              | **da**        |
+| `sef_storno_invoice`                       | Stornira fakturu u statusu Poslata / Prihvaćena / Odbijena                                               | **da**        |
+
+Pored alata, postoje i **gotovi upiti** (`mesecna-faktura`, `podesavanje-firme`, `status-fakture`, `storno-ili-otkazivanje`) i **referentne dokumente** (`sef-mcp://docs/greske`, `…/statusi`, `…/pravila`) koji se prave iz istih podataka koje server koristi.
 
 ## Brzi početak
 

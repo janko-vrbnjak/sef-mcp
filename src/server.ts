@@ -7,6 +7,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import { errorsMarkdown, rulesMarkdown, statusesMarkdown } from "./content.js";
+import { cancelOrStornoPrompt, invoiceStatusPrompt, monthlyInvoicePrompt, setupPrompt } from "./prompts.js";
 import { redact } from "./safety.js";
 import { explainSefError } from "./sef/errors.js";
 import { CompanyInput, CustomerInput, type CompanyArgs, type CustomerArgs } from "./setup.js";
@@ -229,6 +231,56 @@ export async function startServer(tools: SefTools): Promise<void> {
     wrap((a: { invoiceId: number; comment: string; stornoNumber?: string }) =>
       tools.stornoInvoice(a.invoiceId, a.comment, a.stornoNumber)
     )
+  );
+
+  // Resources: reference documents generated from the same data the server uses.
+  const docs: Array<[string, string, string, () => string]> = [
+    ["greske", "SEF greške", "Šifre grešaka koje SEF vraća, šta znače i šta uraditi.", errorsMarkdown],
+    ["statusi", "Statusi faktura", "Statusi izlaznih faktura i da li je moguće otkazivanje ili storno.", statusesMarkdown],
+    ["pravila", "Pravila pre slanja", "Pravila koja sef-mcp proverava i trenutna bezbednosna podešavanja.", () => rulesMarkdown(tools.cfg)],
+  ];
+  for (const [slug, title, description, render] of docs) {
+    server.registerResource(
+      slug,
+      `sef-mcp://docs/${slug}`,
+      { title, description, mimeType: "text/markdown" },
+      async (uri) => ({ contents: [{ uri: uri.href, mimeType: "text/markdown", text: render() }] })
+    );
+  }
+
+  // Prompts: starting points the user can pick in the client; each restates the safety rules.
+  const userText = (text: string) => ({ messages: [{ role: "user" as const, content: { type: "text" as const, text } }] });
+  server.registerPrompt(
+    "mesecna-faktura",
+    {
+      title: "Mesečna faktura",
+      description: "Napravi nacrt mesečne e-fakture i pošalji je tek posle odobrenja.",
+      argsSchema: { kupac: z.string().optional(), period: z.string().optional() },
+    },
+    (a) => userText(monthlyInvoicePrompt(a))
+  );
+  server.registerPrompt(
+    "podesavanje-firme",
+    { title: "Podešavanje firme", description: "Prvo podešavanje: ključ, podaci firme, kupci i probna faktura na demo okruženju." },
+    () => userText(setupPrompt())
+  );
+  server.registerPrompt(
+    "status-fakture",
+    {
+      title: "Status fakture",
+      description: "Proveri status poslate fakture i šta je sledeće moguće.",
+      argsSchema: { faktura: z.string().optional() },
+    },
+    (a) => userText(invoiceStatusPrompt(a))
+  );
+  server.registerPrompt(
+    "storno-ili-otkazivanje",
+    {
+      title: "Storno ili otkazivanje",
+      description: "Proveri status fakture i predloži otkazivanje ili storno, uz izričito odobrenje.",
+      argsSchema: { faktura: z.string().optional(), razlog: z.string().optional() },
+    },
+    (a) => userText(cancelOrStornoPrompt(a))
   );
 
   const transport = new StdioServerTransport();

@@ -14,6 +14,8 @@ Sve radi na vašem računaru. Vaš SEF ključ se čuva u sigurnom skladištu sis
 - Nalog na SEF-u (efaktura.mfin.gov.rs) — onaj koji već koristite
 - Oko 20 minuta za prvo podešavanje
 
+SEF alati rade samo u razgovorima i zadacima koji se izvršavaju **na vašem računaru**, u Claude aplikaciji za računar. U Claude-u na webu ili u zadatku koji radi u oblaku nisu dostupni. Ako Claude kaže da SEF alati nisu dostupni, otvorite razgovor u aplikaciji za računar (ili izaberite „Link to this computer“).
+
 ## Podešavanje u 5 koraka
 
 ### 1. Instalirajte ekstenziju „SEF e-fakture“

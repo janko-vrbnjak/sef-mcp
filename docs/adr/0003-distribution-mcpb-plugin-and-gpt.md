@@ -14,8 +14,19 @@ Target users now include non-technical entrepreneurs and accountants who use AI 
 
 ## Updates (added 2026-11-05)
 - Skills: the repository doubles as a plugin marketplace; users add `janko-vrbnjak/sef-mcp` once and enable *Sync automatically*.
-- Extension: privately distributed `.mcpb` files are not auto-updated by Claude; only directory listings are. Until the extension is in Anthropic's directory, the auto-updating skills tell users when the server is older than they need (no network call from the server; rejected alternative: a GitHub update check in the server, which would break the "only SEF" promise).
-- Open: whether a plugin connector can carry a local server with bundled Node.js and keychain-stored keys, which would make one install cover both parts.
+- Extension: privately distributed `.mcpb` files are not auto-updated by Claude. Anthropic no longer lists `.mcpb` extensions in its directory; local servers enter the directory only inside plugins. So the extension stays on GitHub Releases, and the auto-updating skills tell users when the server is older than they need (no network call from the server; rejected alternative: a GitHub update check in the server, which would break the "only SEF" promise).
+
+### Test 2026-11-05: server bundled in the plugin (Cowork)
+| Variant | Result |
+|---|---|
+| `mcpServers` → `https://…/sef-mcp-0.3.0.mcpb` | **Rejected at upload:** "MCPB URL references are not allowed in plugins because the target can change after review." |
+| `mcpServers` → `./servers/sef-mcp.mcpb` (file inside the plugin) | Installs, with a "runs local processes" warning; the connector shows "Runs in each session". The bundle's `user_config` appears only as read-only **author defaults** — Cowork offers no field to enter values. |
+
+Decision: **keep two parts.** A bundled server would start without an API key and have no place for the user to enter one; a default key must never exist. The directory submission is the skills plugin; the extension carries the server and the keychain-stored keys.
+
+Also observed: sef tools exist only in sessions that run on the user's computer (desktop app). A Cowork session running in the cloud, or chat on the web, has no access to the local server; the skills already explain this when the tools are missing.
+
+Revisit only if one install becomes a priority after the pilot: the server could collect the key itself through a local page and store it in the OS keychain (no key in chat), at the cost of a local listener, per-OS keychain code and a new security review (estimate 8–12 h).
 
 ## GPT (ChatGPT Business) — findings and options
 Findings (Nov 2026): ChatGPT custom connectors accept only **remote MCP servers over HTTPS** (OAuth); write-capable tools are available on Business/Enterprise. Local stdio servers are not supported. ChatGPT also supports skills, but skill code runs in OpenAI's environment, which cannot hold the user's SEF key safely or reach SEF on their behalf by design of this project.

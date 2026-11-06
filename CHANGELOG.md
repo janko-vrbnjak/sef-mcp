@@ -4,11 +4,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/), versions: [SemVer](http
 
 ## [Unreleased]
 
+### Added
+
+- MCP prompts: `mesecna-faktura`, `podesavanje-firme`, `status-fakture`, `storno-ili-otkazivanje`. Each restates the safety rules, so they hold without the skills too.
+- MCP resources: `sef-mcp://docs/greske`, `sef-mcp://docs/statusi`, `sef-mcp://docs/pravila`, generated from the server's own data (error table, rules, limits, current environment).
+- `test/content.test.ts`: resources and prompts over the real server. Every error explanation and status action must also appear in the plugin's references.
+
+### Changed
+
+- `src/sef/errors.ts` exports the error table (`KNOWN_SEF_ERRORS`, `KNOWN_HTTP_ERRORS`) as the single source for explanations and docs.
+
 ## [0.3.0] — 2026-11-05
 
 ### Added
 
-- The repository is a plugin marketplace (`.claude-plugin/marketplace.json`): add `janko-vrbnjak/sef-mcp` in Cowork / Claude Code and turn on *Sync automatically* to get skill updates without re-downloading.
+- The repository is a plugin marketplace (`.claude-plugin/marketplace.json`): add `janko-vrbnjak/sef-mcp` in Cowork / Claude Code and turn on _Sync automatically_ to get skill updates without re-downloading.
 - No-network version check: `sef_check_setup` reports `serverVersion`; both skills require server ≥ 0.3.0 and tell users with an older extension where to download the new one.
 - `sef_list_customers` also returns MB, JBKJS, address, e-mail and VAT status, so the user can check what goes on the invoice.
 - `test/distribution.test.ts`: marketplace entry, version alignment (package, plugin, server) and skill minimum version.

@@ -70,6 +70,17 @@ const BY_STATUS: Record<number, Explanation> = {
   },
 };
 
+/** Every documented or observed SEF error code with its explanation (single source for docs and resources). */
+export const KNOWN_SEF_ERRORS: ReadonlyArray<{ code: string } & Explanation> = Object.entries(BY_CODE).map(([code, ex]) => ({
+  code,
+  ...ex,
+}));
+
+/** HTTP statuses with an explanation. */
+export const KNOWN_HTTP_ERRORS: ReadonlyArray<{ status: number } & Explanation> = Object.entries(BY_STATUS).map(
+  ([status, ex]) => ({ status: Number(status), ...ex })
+);
+
 /** Returns explanations for every known SEF code found in the error text, plus one for the HTTP status. */
 export function explainSefError(text: string, status?: number): string[] {
   const out: string[] = [];
