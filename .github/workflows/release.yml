@@ -23,13 +23,8 @@ jobs:
           cache: npm
       - run: npm ci
 
-      - name: Tag must match package and plugin versions
-        run: |
-          V="${GITHUB_REF_NAME#v}"
-          test "$(node -p "require('./package.json').version")" = "$V" || { echo "package.json version != $V"; exit 1; }
-          test "$(node -p "require('./plugins/sef-fakture/.claude-plugin/plugin.json').version")" = "$V" || { echo "plugin.json version != $V"; exit 1; }
-          test "$(node -p "require('./server.json').version")" = "$V" || { echo "server.json version != $V"; exit 1; }
-          test -f "docs/releases/${GITHUB_REF_NAME}.md" || { echo "missing docs/releases/${GITHUB_REF_NAME}.md"; exit 1; }
+      - name: Tag must match versions, release notes and CHANGELOG
+        run: node scripts/release-check.mjs "${GITHUB_REF_NAME#v}"
 
       - run: npm test
       - run: npm run pack:mcpb

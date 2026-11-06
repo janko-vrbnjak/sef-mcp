@@ -4,6 +4,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/), versions: [SemVer](http
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-11-06
+
 ### Added
 
 - MCP prompts: `mesecna-faktura`, `podesavanje-firme`, `status-fakture`, `storno-ili-otkazivanje`. Each restates the safety rules, so they hold without the skills too.
@@ -14,7 +16,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/), versions: [SemVer](http
 
 ### Changed
 
-- Release workflow: default permission `contents: read`; only the release job can write; the tag must also match `server.json`.
+- Release workflow: default permission `contents: read`; only the release job can write. The tag check is now `scripts/release-check.mjs` (`npm run release:check -- X.Y.Z`, also before tagging): versions in package, lock, plugin and `server.json`, release notes and CHANGELOG section.
 - `src/sef/errors.ts` exports the error table (`KNOWN_SEF_ERRORS`, `KNOWN_HTTP_ERRORS`) as the single source for explanations and docs.
 
 ## [0.3.0] — 2026-11-05

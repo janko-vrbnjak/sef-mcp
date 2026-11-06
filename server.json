@@ -8,11 +8,11 @@
     "source": "github"
   },
   "websiteUrl": "https://github.com/janko-vrbnjak/sef-mcp",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "packages": [
     {
       "registryType": "mcpb",
-      "identifier": "https://github.com/janko-vrbnjak/sef-mcp/releases/download/v0.3.0/sef-mcp.mcpb",
+      "identifier": "https://github.com/janko-vrbnjak/sef-mcp/releases/download/v0.4.0/sef-mcp.mcpb",
       "transport": {
         "type": "stdio"
       }
